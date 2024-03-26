@@ -19,11 +19,6 @@ export default function RootLayout({
           <nav>
             <ul className="flex space-x-4">
               <li>
-                <Link href={"/"} className="hover:text-gray-500">
-                  Home
-                </Link>
-              </li>
-              <li>
                 <Link href={"/calc"} className="hover:text-gray-500">
                   Calc
                 </Link>
