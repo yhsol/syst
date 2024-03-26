@@ -13,7 +13,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <header className="flex justify-between items-center p-5 shadow-md">
-          <h1 className="text-xl font-bold">syst</h1>
+          <h1 className="text-xl font-bold">
+            <Link href={"/"}>syst</Link>
+          </h1>
           <nav>
             <ul className="flex space-x-4">
               <li>
