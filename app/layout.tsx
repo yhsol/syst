@@ -12,7 +12,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <header className="flex justify-between items-center p-5 shadow-md">
+        <header className="flex justify-between items-center p-5 border-b-2 border-b-black">
           <h1 className="text-xl font-bold">
             <Link href={"/"}>syst</Link>
           </h1>
@@ -34,7 +34,7 @@ export default function RootLayout({
 
         <main>{children}</main>
 
-        <footer className="text-center p-4 shadow-inner">
+        <footer className="text-center p-4 border-t-2 border-t-black">
           © 2024 syst. All rights reserved.
         </footer>
       </body>
