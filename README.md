@@ -7,3 +7,4 @@ syst is an abbreviation for system trading.
   - 인증 기능 추가하기.
   - 소켓 연결.
   - 빗썸 api 를 좀 더 자세히 보고 사용할 수 있는 부분 정리하기.
+  - 지금은 조회를 여러번 하게되는 구조. 개선 필요.

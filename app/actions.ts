@@ -562,9 +562,11 @@ export async function findCommonCoins(
   return commonCoins;
 }
 
-export async function findCommonSpike() {
-  const continuousRisingCoins = await filterContinuousRisingCoins();
-  const volumeSpikeCoins = await filterVolumeSpikeCoins();
+export async function findCommonSpike(chartIntervals: ChartIntervals = "1h") {
+  const continuousRisingCoins = await filterContinuousRisingCoins(
+    chartIntervals
+  );
+  const volumeSpikeCoins = await filterVolumeSpikeCoins(chartIntervals);
 
   return continuousRisingCoins.filter((coin) =>
     volumeSpikeCoins.includes(coin)

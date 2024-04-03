@@ -148,7 +148,7 @@ export default function Trading() {
           <button
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
             onClick={() =>
-              fetchResult(() => filterContinuousRisingCoins("5m", 2))
+              fetchResult(() => filterContinuousRisingCoins("1h", 2))
             }
           >
             지속 상승 코인
@@ -156,14 +156,14 @@ export default function Trading() {
           <button
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
             onClick={() =>
-              fetchResult(() => filterVolumeSpikeCoins("5m", 200, 2))
+              fetchResult(() => filterVolumeSpikeCoins("1h", 200, 2))
             }
           >
             거래량 급증 코인
           </button>
           <button
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
-            onClick={() => fetchResult(() => findCommonSpike())}
+            onClick={() => fetchResult(() => findCommonSpike("1h"))}
           >
             지속 상승 + 거래량 급증
           </button>
