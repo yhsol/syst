@@ -1,77 +1,58 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  accountInfo,
-  balance,
-  currentPriceInfo,
   filterCoinsByRiseRate,
-  filterContinuousRisingCoins,
   filterCoinsByValue,
+  filterContinuousRisingCoins,
+  filterUp,
   filterVolumeSpikeCoins,
   findCommonCoins,
-  orderDetailInfo,
-  orderInfo,
-  orderbookInfo,
-  recentTransactionsInfo,
-  tradeHistory,
-  findCommonSpike,
-  findCommonSpike2,
+  findGoldenCrossCoins,
 } from "../actions";
 
+type CoinResult = { symbol: any }[];
+
 export default function Trading() {
-  const [selectedResult, setSelectedResult] = useState<any>("let's find out!");
-  const [selectedMethods, setSelectedMethods] = useState([]);
-  const [commonResults, setCommonResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [results, setResults] = useState<any>({});
+  const [activeKeys, setActiveKeys] = useState<any>({});
+  const [intersectionResults, setIntersectionResults] = useState<any>([]);
 
-  const allMethods = {
-    filterCoinsByValue,
-    filterCoinsByRiseRate,
-    findCommonCoins,
-    filterContinuousRisingCoins,
-    filterVolumeSpikeCoins,
-    findCommonSpike,
-  } as any;
-
-  const handleMethodSelection = (method: any) => {
-    setSelectedMethods((prev: any) =>
-      prev.includes(method)
-        ? prev.filter((m: any) => m !== method)
-        : [...prev, method]
-    );
-  };
-
-  const findCommonElements = (arrays: any) => {
-    return arrays.reduce(
-      (acc: any, array: any) => acc.filter((item: any) => array.includes(item)),
-      arrays[0] || []
-    );
-  };
-
-  const executeSelectedMethods = async () => {
-    const results = await Promise.all(
-      selectedMethods.map((method) => allMethods[method]())
-    );
-    console.log("log=> results", results);
-
-    const commonElements = findCommonElements(
-      results.map((result) => result.map((coin: any) => coin))
-    );
-    setCommonResults(commonElements);
-  };
-
-  const fetchResult = async (action: () => Promise<any>) => {
-    setIsLoading(true); // 로딩 시작
+  const fetchData = async (key: any, action: any) => {
+    setIsLoading(true);
     try {
       const result = await action();
-      setSelectedResult(result);
+      setResults((prevResults: any) => ({
+        ...prevResults,
+        [key]: result.map((item: any) => item.symbol),
+      }));
     } catch (error) {
       console.error(error);
     } finally {
-      setIsLoading(false); // 로딩 종료
+      setIsLoading(false);
     }
   };
+
+  const toggleActiveKey = (key: any) => {
+    setActiveKeys((prevActiveKeys: any) => ({
+      ...prevActiveKeys,
+      [key]: !prevActiveKeys[key],
+    }));
+  };
+
+  useEffect(() => {
+    // 결과의 교집합을 계산합니다.
+    const allResults = Object.values(results);
+    if (allResults.length > 1) {
+      const intersection = allResults.reduce((acc: any, result: any) =>
+        acc.filter((item: any) => result.includes(item))
+      );
+      setIntersectionResults(intersection);
+    }
+  }, [results]);
+
+  console.log("log=> intersectionResults: ", intersectionResults);
 
   return (
     <>
@@ -80,76 +61,30 @@ export default function Trading() {
         <aside className="w-1/4 p-4 overflow-y-auto">
           <button
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
-            onClick={() => fetchResult(() => currentPriceInfo("BTC_KRW"))}
-          >
-            현재가 정보 조회
-          </button>
-          <button
-            className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
-            onClick={() => fetchResult(() => orderbookInfo("BTC_KRW"))}
-          >
-            호가 정보 조회
-          </button>
-          <button
-            className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
-            onClick={() => fetchResult(() => accountInfo())}
-          >
-            회원 정보 조회
-          </button>
-          <button
-            className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
-            onClick={() => fetchResult(() => balance())}
-          >
-            보유자산 조회
-          </button>
-          <button
-            className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
-            onClick={() => fetchResult(() => recentTransactionsInfo())}
-          >
-            최근 거래정보 조회
-          </button>
-          <button
-            className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
-            onClick={() => fetchResult(() => orderInfo("THETA"))}
-          >
-            거래 주문내역 조회
-          </button>
-          <button
-            className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
-            onClick={() =>
-              fetchResult(() => orderDetailInfo("need order id", "THETA"))
-            }
-          >
-            거래 주문내역 상세 조회
-          </button>
-          <button
-            className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
-            onClick={() => fetchResult(() => tradeHistory("THETA", "KRW"))}
-          >
-            거래 체결내역 조회
-          </button>
-          <button
-            className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
-            onClick={() => fetchResult(() => filterCoinsByValue())}
-          >
-            거래량 100
-          </button>
-          <button
-            className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
-            onClick={() => fetchResult(() => filterCoinsByRiseRate())}
+            onClick={() => fetchData("topByRiseRate", filterCoinsByRiseRate)}
           >
             상승률 100
           </button>
           <button
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
-            onClick={() => fetchResult(() => findCommonCoins("rise"))}
+            onClick={() => fetchData("topByVolume", filterCoinsByValue)}
+          >
+            거래량 100
+          </button>
+          <button
+            className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
+            onClick={() =>
+              fetchData("commonVolumeAndRiseRate", findCommonCoins)
+            }
           >
             거래량 & 상승률 겹치는 코인
           </button>
           <button
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
             onClick={() =>
-              fetchResult(() => filterContinuousRisingCoins("10m", 2, 200))
+              fetchData("continuousRisingCoins", () =>
+                filterContinuousRisingCoins("30m", 2, 200)
+              )
             }
           >
             지속 상승 코인
@@ -157,68 +92,68 @@ export default function Trading() {
           <button
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
             onClick={() =>
-              fetchResult(() => filterVolumeSpikeCoins("10m", 200, 2))
+              fetchData("volumeSpikeCoins", () =>
+                filterVolumeSpikeCoins("10m", 200, 2)
+              )
             }
           >
             거래량 급증 코인
           </button>
           <button
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
-            onClick={() => fetchResult(() => findCommonSpike("10m"))}
+            onClick={() => fetchData("goldenCrossCoins", findGoldenCrossCoins)}
           >
-            지속 상승 + 거래량 급증
+            golden cross
           </button>
           <button
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
-            onClick={() => fetchResult(() => findCommonSpike2("10m"))}
+            onClick={() => fetchData("filterUpCoins", filterUp)}
           >
-            거래량 + 상승률 + 지속 상승 + 거래량 급증
+            filter up
           </button>
         </aside>
 
         {/* 메인 영역: 결과 데이터를 그대로 보여줍니다. */}
-        <main className="w-1/2 p-4">
+        <main className="w-1/2 p-4 flex flex-col">
           {isLoading ? (
             <div className="flex justify-center items-center">
               <div className="loader"></div>
             </div>
           ) : (
-            <pre className="whitespace-pre-wrap text-sm">
-              {selectedResult && selectedResult.length
-                ? JSON.stringify(selectedResult, null, 2)
-                : "No data"}
-            </pre>
+            Object.keys(results).map((key) =>
+              activeKeys[key] ? (
+                <div key={key}>
+                  <button
+                    onClick={() => toggleActiveKey(key)}
+                    className="my-2 p-2 bg-blue-500 text-white rounded-md"
+                  >
+                    {key}
+                  </button>
+                  <pre className="whitespace-pre-wrap text-sm">
+                    {JSON.stringify(results[key], null, 2)}
+                  </pre>
+                </div>
+              ) : (
+                <button
+                  key={key}
+                  onClick={() => toggleActiveKey(key)}
+                  className="my-2 p-2 bg-gray-500 text-white rounded-md"
+                >
+                  {key}
+                </button>
+              )
+            )
           )}
         </main>
 
         {/* 오른쪽 사이드 메뉴 */}
         <aside className="w-1/4 p-4 overflow-y-auto">
-          {Object.keys(allMethods).map((method) => (
-            <button
-              key={method}
-              onClick={() => handleMethodSelection(method)}
-              className={`my-2 p-2 w-full rounded-md ${
-                (selectedMethods as any).includes(method)
-                  ? "bg-green-500 text-white"
-                  : "bg-gray-500 text-white"
-              }`}
-            >
-              {method}
-            </button>
-          ))}
-          <button
-            onClick={executeSelectedMethods}
-            className="mt-4 p-2 w-full bg-gray-500 text-white rounded-md"
-          >
-            결과 겹치기 조회
-          </button>
-
           {/* 공통 결과 표시 */}
           <div className="mt-4">
-            <div>공통 결과:</div>
-            {commonResults.map((result, index) => (
-              <div key={index}>{result}</div>
-            ))}
+            <div>겹치는 결과:</div>
+            <pre className="whitespace-pre-wrap text-sm">
+              {JSON.stringify(intersectionResults, null, 2)}
+            </pre>
           </div>
         </aside>
       </div>

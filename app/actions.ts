@@ -503,7 +503,7 @@ export async function filterCoinsByValue(limit = 100) {
     .sort((a, b) => b.tradeValue - a.tradeValue)
     .slice(0, limit);
 
-  return sortedByValue.map((coin) => coin.symbol);
+  return sortedByValue;
 }
 
 export async function filterCoinsByRiseRate(limit = 100) {
@@ -530,7 +530,7 @@ export async function filterCoinsByRiseRate(limit = 100) {
     .sort((a, b) => b.riseRate - a.riseRate)
     .slice(0, limit);
 
-  return sortedByRiseRate.map((coin) => coin.symbol);
+  return sortedByRiseRate;
 }
 
 export async function findCommonCoins(
@@ -572,10 +572,9 @@ export async function filterContinuousRisingCoins(
     ? await findCommonCoins("rise", limit)
     : await filterCoinsByRiseRate(limit);
   const risingCoins = []; // 연속 상승 중인 코인들을 저장할 배열
-  console.log("log=> commonCoins: ", base);
 
   for (const coin of base) {
-    const candleData = await candlestick(coin, "KRW", chartIntervals);
+    const candleData = await candlestick(coin.symbol, "KRW", chartIntervals);
     if (
       candleData.status === "0000" &&
       candleData.data &&
@@ -614,7 +613,7 @@ export async function filterVolumeSpikeCoins(
   const volumeSpikeCoins = []; // 거래량이 급증한 코인들을 저장할 배열
 
   for (const coin of base) {
-    const candleData = await candlestick(coin, "KRW", chartIntervals);
+    const candleData = await candlestick(coin.symbol, "KRW", chartIntervals);
     if (
       candleData.status === "0000" &&
       candleData.data &&
@@ -667,4 +666,78 @@ export async function findCommonSpike2(chartIntervals: ChartIntervals = "1h") {
   return continuousRisingCoins.filter((coin) =>
     volumeSpikeCoins.includes(coin)
   );
+}
+
+export async function findGoldenCrossCoins(
+  chartIntervals: ChartIntervals = "1m"
+) {
+  const topCoins = await filterCoinsByValue(200); // 거래대금 상위 200개 코인 추출
+  const goldenCrossCoins = [];
+
+  for (const coin of topCoins) {
+    const candleData = await candlestick(coin.symbol, "KRW", chartIntervals);
+    if (candleData.status !== "0000" || !candleData.data) {
+      continue; // 데이터가 유효하지 않은 경우 건너뛰기
+    }
+
+    const closingPrices = candleData.data.map((candle: any) =>
+      parseFloat(candle[2])
+    ); // 종가 데이터 추출
+    const ma50 = calculateMovingAverage(closingPrices, 50); // 50분 이동평균 계산
+    const ma200 = calculateMovingAverage(closingPrices, 200); // 200분 이동평균 계산
+
+    // 골든크로스 확인
+    for (let i = closingPrices.length - 10; i < closingPrices.length; i++) {
+      if (ma50[i] > ma200[i] && ma50[i - 1] <= ma200[i - 1]) {
+        goldenCrossCoins.push(coin.symbol);
+        break; // 최근 10개 캔들 내 골든크로스 발견 시 추가하고 다음 코인으로 넘어감
+      }
+    }
+  }
+
+  return goldenCrossCoins; // 골든크로스가 발생한 코인 리스트 반환
+}
+
+function calculateMovingAverage(prices: any, period: any) {
+  return prices.map((val: any, idx: any, arr: any) => {
+    if (idx < period - 1) return null; // 이동평균을 계산할 수 없는 경우 null 반환
+    let sum = 0;
+    for (let i = idx; i > idx - period; i--) {
+      sum += arr[i];
+    }
+    return sum / period;
+  });
+}
+
+export async function filterUp(
+  chartIntervals: ChartIntervals = "1h",
+  minRisingCandles = 5,
+  limit = 100,
+  common = false
+) {
+  const base = common
+    ? await findCommonCoins("rise", limit)
+    : await filterCoinsByValue(limit);
+  const risingCoins = []; // 연속 상승 중인 코인들을 저장할 배열
+
+  for (const coin of base) {
+    const candleData = await candlestick(coin.symbol, "KRW", chartIntervals);
+    if (
+      candleData.status === "0000" &&
+      candleData.data &&
+      candleData.data.length >= minRisingCandles
+    ) {
+      console.log("log=> candleData.data:", candleData.data);
+
+      const firstCandle = candleData.data[0]; // 첫 번째 캔들
+      const lastCandle = candleData.data[candleData.data.length - 1]; // 마지막 캔들
+
+      // 첫 번째 캔들의 시가보다 마지막 캔들의 종가가 높은 경우
+      if (parseFloat(lastCandle[2]) > parseFloat(firstCandle[2])) {
+        risingCoins.push(coin); // 조건에 맞는 코인 추가
+      }
+    }
+  }
+
+  return risingCoins;
 }
