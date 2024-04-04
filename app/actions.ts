@@ -562,27 +562,20 @@ export async function findCommonCoins(
   return commonCoins;
 }
 
-export async function findCommonSpike(chartIntervals: ChartIntervals = "1h") {
-  const continuousRisingCoins = await filterContinuousRisingCoins(
-    chartIntervals
-  );
-  const volumeSpikeCoins = await filterVolumeSpikeCoins(chartIntervals);
-
-  return continuousRisingCoins.filter((coin) =>
-    volumeSpikeCoins.includes(coin)
-  );
-}
-
 export async function filterContinuousRisingCoins(
   chartIntervals: ChartIntervals = "1h",
   minRisingCandles = 3,
-  limit = 100
+  limit = 100,
+  common = false
 ) {
-  const commonCoins = await findCommonCoins("rise", limit); // 공통 코인 목록
+  const base = common
+    ? await findCommonCoins("rise", limit)
+    : await filterCoinsByRiseRate(limit);
   const risingCoins = []; // 연속 상승 중인 코인들을 저장할 배열
+  console.log("log=> commonCoins: ", base);
 
-  for (const coin of commonCoins) {
-    const candleData = await candlestick(coin.symbol, "KRW", chartIntervals);
+  for (const coin of base) {
+    const candleData = await candlestick(coin, "KRW", chartIntervals);
     if (
       candleData.status === "0000" &&
       candleData.data &&
@@ -601,7 +594,7 @@ export async function filterContinuousRisingCoins(
       }
 
       if (isRising) {
-        risingCoins.push(coin.symbol); // 연속 상승 중인 코인 추가
+        risingCoins.push(coin); // 연속 상승 중인 코인 추가
       }
     }
   }
@@ -612,13 +605,16 @@ export async function filterContinuousRisingCoins(
 export async function filterVolumeSpikeCoins(
   chartIntervals = "1h",
   limit = 100,
-  volumeIncreaseFactor = 1.5
+  volumeIncreaseFactor = 1.5,
+  common = false
 ) {
-  const commonCoins = await filterCoinsByValue(limit); // 공통 코인 목록
+  const base = common
+    ? await findCommonCoins("rise", limit)
+    : await filterCoinsByValue(limit);
   const volumeSpikeCoins = []; // 거래량이 급증한 코인들을 저장할 배열
 
-  for (const coin of commonCoins) {
-    const candleData = await candlestick(coin.symbol, "KRW", chartIntervals);
+  for (const coin of base) {
+    const candleData = await candlestick(coin, "KRW", chartIntervals);
     if (
       candleData.status === "0000" &&
       candleData.data &&
@@ -635,10 +631,40 @@ export async function filterVolumeSpikeCoins(
         .some((volume: any) => volume > averageVolume * volumeIncreaseFactor);
 
       if (hasVolumeSpike) {
-        volumeSpikeCoins.push(coin.symbol); // 거래량 급증 코인 추가
+        volumeSpikeCoins.push(coin); // 거래량 급증 코인 추가
       }
     }
   }
 
   return volumeSpikeCoins;
+}
+
+export async function findCommonSpike(chartIntervals: ChartIntervals = "1h") {
+  const continuousRisingCoins = await filterContinuousRisingCoins(
+    chartIntervals
+  );
+  const volumeSpikeCoins = await filterVolumeSpikeCoins(chartIntervals);
+
+  return continuousRisingCoins.filter((coin) =>
+    volumeSpikeCoins.includes(coin)
+  );
+}
+
+export async function findCommonSpike2(chartIntervals: ChartIntervals = "1h") {
+  const continuousRisingCoins = await filterContinuousRisingCoins(
+    chartIntervals,
+    3,
+    200,
+    true
+  );
+  const volumeSpikeCoins = await filterVolumeSpikeCoins(
+    chartIntervals,
+    200,
+    1.5,
+    true
+  );
+
+  return continuousRisingCoins.filter((coin) =>
+    volumeSpikeCoins.includes(coin)
+  );
 }

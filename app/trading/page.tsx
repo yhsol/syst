@@ -16,6 +16,7 @@ import {
   recentTransactionsInfo,
   tradeHistory,
   findCommonSpike,
+  findCommonSpike2,
 } from "../actions";
 
 export default function Trading() {
@@ -148,7 +149,7 @@ export default function Trading() {
           <button
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
             onClick={() =>
-              fetchResult(() => filterContinuousRisingCoins("1h", 2))
+              fetchResult(() => filterContinuousRisingCoins("10m", 2, 200))
             }
           >
             지속 상승 코인
@@ -156,16 +157,22 @@ export default function Trading() {
           <button
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
             onClick={() =>
-              fetchResult(() => filterVolumeSpikeCoins("1h", 200, 2))
+              fetchResult(() => filterVolumeSpikeCoins("10m", 200, 2))
             }
           >
             거래량 급증 코인
           </button>
           <button
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
-            onClick={() => fetchResult(() => findCommonSpike("1h"))}
+            onClick={() => fetchResult(() => findCommonSpike("10m"))}
           >
             지속 상승 + 거래량 급증
+          </button>
+          <button
+            className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
+            onClick={() => fetchResult(() => findCommonSpike2("10m"))}
+          >
+            거래량 + 상승률 + 지속 상승 + 거래량 급증
           </button>
         </aside>
 
@@ -177,7 +184,9 @@ export default function Trading() {
             </div>
           ) : (
             <pre className="whitespace-pre-wrap text-sm">
-              {JSON.stringify(selectedResult, null, 2)}
+              {selectedResult && selectedResult.length
+                ? JSON.stringify(selectedResult, null, 2)
+                : "No data"}
             </pre>
           )}
         </main>
