@@ -689,7 +689,7 @@ export async function findGoldenCrossCoins(
     // 골든크로스 확인
     for (let i = closingPrices.length - 10; i < closingPrices.length; i++) {
       if (ma50[i] > ma200[i] && ma50[i - 1] <= ma200[i - 1]) {
-        goldenCrossCoins.push(coin.symbol);
+        goldenCrossCoins.push(coin);
         break; // 최근 10개 캔들 내 골든크로스 발견 시 추가하고 다음 코인으로 넘어감
       }
     }
