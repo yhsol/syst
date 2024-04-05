@@ -9,7 +9,7 @@ const api_key = process.env.NEXT_PUBLIC_BITHUMB_CON_KEY;
 const api_secret = process.env.NEXT_PUBLIC_BITHUMB_SEC_KEY;
 const xcoinAPI = new XCoinAPI(api_key, api_secret);
 
-type PriceInfo = {
+export type PriceInfo = {
   acc_trade_value: string;
   acc_trade_value_24H: string;
   closing_price: string;
@@ -740,4 +740,70 @@ export async function filterUp(
   }
 
   return risingCoins;
+}
+
+export async function filterContinuousGreenCandles(
+  chartIntervals: ChartIntervals = "1h",
+  minGreenCandles = 3,
+  limit = 100,
+  common = false
+) {
+  const base = common
+    ? await findCommonCoins("rise", limit)
+    : await filterCoinsByRiseRate(limit);
+  const greenCandlesCoins = []; // 연속 양봉 중인 코인들을 저장할 배열
+
+  for (const coin of base) {
+    const candleData = await candlestick(coin.symbol, "KRW", chartIntervals);
+    if (
+      candleData.status === "0000" &&
+      candleData.data &&
+      candleData.data.length >= minGreenCandles
+    ) {
+      const recentCandles = candleData.data.slice(-minGreenCandles); // 최근 캔들 데이터
+      let isAllGreen = recentCandles.every((candle: any) => {
+        const openPrice = parseFloat(candle[1]);
+        const closePrice = parseFloat(candle[2]);
+        return closePrice > openPrice; // 종가가 시가보다 높은 경우 양봉
+      });
+
+      if (isAllGreen) {
+        greenCandlesCoins.push(coin); // 연속 양봉 중인 코인 추가
+      }
+    }
+  }
+
+  return greenCandlesCoins;
+}
+
+// 지속 상승 및 연속 양봉 필터링
+export async function filterRisingAndGreenCandles(
+  chartIntervals: ChartIntervals = "1h",
+  minRisingCandles = 3,
+  minGreenCandles = 3,
+  limit = 200,
+  common = false
+) {
+  // 우선, 연속 상승하는 코인을 필터링합니다.
+  const risingCoins = await filterContinuousRisingCoins(
+    chartIntervals,
+    minRisingCandles,
+    limit,
+    common
+  );
+
+  // 양봉을 연속으로 그리는 코인들을 필터링합니다.
+  const greenCandlesCoins = await filterContinuousGreenCandles(
+    chartIntervals,
+    minGreenCandles,
+    limit,
+    common
+  );
+
+  // 두 조건을 모두 만족하는 코인들의 교집합을 찾습니다.
+  const risingAndGreenCandlesCoins = risingCoins.filter((coin) =>
+    greenCandlesCoins.some((greenCoin) => greenCoin.symbol === coin.symbol)
+  );
+
+  return risingAndGreenCandlesCoins;
 }
