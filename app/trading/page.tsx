@@ -7,8 +7,7 @@ import {
   filterCoinsByValue,
   filterContinuousGreenCandles,
   filterContinuousRisingCoins,
-  filterRisingAndGreenCandles,
-  filterUp,
+  lowToHigh,
   filterVolumeSpikeCoins,
   findCommonCoins,
   findGoldenCrossCoins,
@@ -123,9 +122,10 @@ export default function Trading() {
           <button
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
             onClick={() =>
-              fetchData("continuousRisingCoins", () =>
-                filterContinuousRisingCoins("10m", 2, 100)
-              )
+              fetchData("continuousRisingCoins", async () => {
+                const coins = await filterCoinsByRiseRate(200);
+                return filterContinuousRisingCoins(coins, "10m", 2);
+              })
             }
           >
             지속 상승 코인
@@ -133,9 +133,10 @@ export default function Trading() {
           <button
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
             onClick={() =>
-              fetchData("ContinuousGreenCandles", () =>
-                filterContinuousGreenCandles("10m", 2, 100)
-              )
+              fetchData("ContinuousGreenCandles", async () => {
+                const coins = await filterCoinsByRiseRate(200);
+                return filterContinuousGreenCandles(coins, "10m", 2);
+              })
             }
           >
             지속 양봉 코인
@@ -143,9 +144,10 @@ export default function Trading() {
           <button
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
             onClick={() =>
-              fetchData("volumeSpikeCoins", () =>
-                filterVolumeSpikeCoins("10m", 100, 2)
-              )
+              fetchData("volumeSpikeCoins", async () => {
+                const coins = await filterCoinsByValue(200);
+                return filterVolumeSpikeCoins(coins, "10m");
+              })
             }
           >
             거래량 급증 코인
@@ -153,53 +155,25 @@ export default function Trading() {
           <button
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
             onClick={() =>
-              fetchData("1mgoldenCrossCoins", () => findGoldenCrossCoins("1m"))
+              fetchData("1mgoldenCrossCoins", async () => {
+                const coins = await filterCoinsByRiseRate(200);
+                return findGoldenCrossCoins(coins, "1m");
+              })
             }
           >
             1m golden cross
           </button>
-          <button
-            className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
-            onClick={() =>
-              fetchData("5mgoldenCrossCoins", () => findGoldenCrossCoins("5m"))
-            }
-          >
-            5m golden cross
-          </button>
-          <button
-            className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
-            onClick={() =>
-              fetchData("10mgoldenCrossCoins", () =>
-                findGoldenCrossCoins("10m")
-              )
-            }
-          >
-            10m golden cross
-          </button>
-          <button
-            className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
-            onClick={() =>
-              fetchData("30mgoldenCrossCoins", () =>
-                findGoldenCrossCoins("30m")
-              )
-            }
-          >
-            30m golden cross
-          </button>
-          <button
-            className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
-            onClick={() =>
-              fetchData("1hgoldenCrossCoins", () => findGoldenCrossCoins("1h"))
-            }
-          >
-            1h golden cross
-          </button>
 
           <button
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
-            onClick={() => fetchData("filterUpCoins", filterUp)}
+            onClick={() =>
+              fetchData("lowToHigh", async () => {
+                const coins = await filterCoinsByValue(200);
+                return lowToHigh(coins, "5m");
+              })
+            }
           >
-            filter up
+            low to high
           </button>
         </aside>
 

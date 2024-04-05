@@ -23,6 +23,11 @@ export type PriceInfo = {
   units_traded_24H: string;
 };
 
+export type CoinInfo = {
+  symbol: string;
+  data: PriceInfo;
+};
+
 type ChartIntervals =
   | "1m"
   | "3m"
@@ -563,17 +568,13 @@ export async function findCommonCoins(
 }
 
 export async function filterContinuousRisingCoins(
+  coins: CoinInfo[],
   chartIntervals: ChartIntervals = "1h",
-  minRisingCandles = 3,
-  limit = 100,
-  common = false
+  minRisingCandles = 3
 ) {
-  const base = common
-    ? await findCommonCoins("rise", limit)
-    : await filterCoinsByRiseRate(limit);
   const risingCoins = []; // 연속 상승 중인 코인들을 저장할 배열
 
-  for (const coin of base) {
+  for (const coin of coins) {
     const candleData = await candlestick(coin.symbol, "KRW", chartIntervals);
     if (
       candleData.status === "0000" &&
@@ -601,18 +602,43 @@ export async function filterContinuousRisingCoins(
   return risingCoins;
 }
 
-export async function filterVolumeSpikeCoins(
-  chartIntervals = "1h",
-  limit = 100,
-  volumeIncreaseFactor = 1.5,
-  common = false
+export async function filterContinuousGreenCandles(
+  coins: CoinInfo[],
+  chartIntervals: ChartIntervals = "1h",
+  minGreenCandles = 3
 ) {
-  const base = common
-    ? await findCommonCoins("rise", limit)
-    : await filterCoinsByValue(limit);
+  const greenCandlesCoins = []; // 연속 양봉 중인 코인들을 저장할 배열
+  for (const coin of coins) {
+    const candleData = await candlestick(coin.symbol, "KRW", chartIntervals);
+    if (
+      candleData.status === "0000" &&
+      candleData.data &&
+      candleData.data.length >= minGreenCandles
+    ) {
+      const recentCandles = candleData.data.slice(-minGreenCandles); // 최근 캔들 데이터
+      let isAllGreen = recentCandles.every((candle: any) => {
+        const openPrice = parseFloat(candle[1]);
+        const closePrice = parseFloat(candle[2]);
+        return closePrice > openPrice; // 종가가 시가보다 높은 경우 양봉
+      });
+
+      if (isAllGreen) {
+        greenCandlesCoins.push(coin); // 연속 양봉 중인 코인 추가
+      }
+    }
+  }
+
+  return greenCandlesCoins;
+}
+
+export async function filterVolumeSpikeCoins(
+  coins: CoinInfo[],
+  chartIntervals = "1h",
+  volumeIncreaseFactor = 1.5
+) {
   const volumeSpikeCoins = []; // 거래량이 급증한 코인들을 저장할 배열
 
-  for (const coin of base) {
+  for (const coin of coins) {
     const candleData = await candlestick(coin.symbol, "KRW", chartIntervals);
     if (
       candleData.status === "0000" &&
@@ -638,43 +664,13 @@ export async function filterVolumeSpikeCoins(
   return volumeSpikeCoins;
 }
 
-export async function findCommonSpike(chartIntervals: ChartIntervals = "1h") {
-  const continuousRisingCoins = await filterContinuousRisingCoins(
-    chartIntervals
-  );
-  const volumeSpikeCoins = await filterVolumeSpikeCoins(chartIntervals);
-
-  return continuousRisingCoins.filter((coin) =>
-    volumeSpikeCoins.includes(coin)
-  );
-}
-
-export async function findCommonSpike2(chartIntervals: ChartIntervals = "1h") {
-  const continuousRisingCoins = await filterContinuousRisingCoins(
-    chartIntervals,
-    3,
-    200,
-    true
-  );
-  const volumeSpikeCoins = await filterVolumeSpikeCoins(
-    chartIntervals,
-    200,
-    1.5,
-    true
-  );
-
-  return continuousRisingCoins.filter((coin) =>
-    volumeSpikeCoins.includes(coin)
-  );
-}
-
 export async function findGoldenCrossCoins(
+  coins: CoinInfo[],
   chartIntervals: ChartIntervals = "1m"
 ) {
-  const topCoins = await filterCoinsByValue(200); // 거래대금 상위 200개 코인 추출
   const goldenCrossCoins = [];
 
-  for (const coin of topCoins) {
+  for (const coin of coins) {
     const candleData = await candlestick(coin.symbol, "KRW", chartIntervals);
     if (candleData.status !== "0000" || !candleData.data) {
       continue; // 데이터가 유효하지 않은 경우 건너뛰기
@@ -709,26 +705,20 @@ function calculateMovingAverage(prices: any, period: any) {
   });
 }
 
-export async function filterUp(
+export async function lowToHigh(
+  coins: CoinInfo[],
   chartIntervals: ChartIntervals = "1h",
-  minRisingCandles = 5,
-  limit = 100,
-  common = false
+  minRisingCandles = 5
 ) {
-  const base = common
-    ? await findCommonCoins("rise", limit)
-    : await filterCoinsByValue(limit);
   const risingCoins = []; // 연속 상승 중인 코인들을 저장할 배열
 
-  for (const coin of base) {
+  for (const coin of coins) {
     const candleData = await candlestick(coin.symbol, "KRW", chartIntervals);
     if (
       candleData.status === "0000" &&
       candleData.data &&
       candleData.data.length >= minRisingCandles
     ) {
-      console.log("log=> candleData.data:", candleData.data);
-
       const firstCandle = candleData.data[0]; // 첫 번째 캔들
       const lastCandle = candleData.data[candleData.data.length - 1]; // 마지막 캔들
 
@@ -740,70 +730,4 @@ export async function filterUp(
   }
 
   return risingCoins;
-}
-
-export async function filterContinuousGreenCandles(
-  chartIntervals: ChartIntervals = "1h",
-  minGreenCandles = 3,
-  limit = 100,
-  common = false
-) {
-  const base = common
-    ? await findCommonCoins("rise", limit)
-    : await filterCoinsByRiseRate(limit);
-  const greenCandlesCoins = []; // 연속 양봉 중인 코인들을 저장할 배열
-
-  for (const coin of base) {
-    const candleData = await candlestick(coin.symbol, "KRW", chartIntervals);
-    if (
-      candleData.status === "0000" &&
-      candleData.data &&
-      candleData.data.length >= minGreenCandles
-    ) {
-      const recentCandles = candleData.data.slice(-minGreenCandles); // 최근 캔들 데이터
-      let isAllGreen = recentCandles.every((candle: any) => {
-        const openPrice = parseFloat(candle[1]);
-        const closePrice = parseFloat(candle[2]);
-        return closePrice > openPrice; // 종가가 시가보다 높은 경우 양봉
-      });
-
-      if (isAllGreen) {
-        greenCandlesCoins.push(coin); // 연속 양봉 중인 코인 추가
-      }
-    }
-  }
-
-  return greenCandlesCoins;
-}
-
-// 지속 상승 및 연속 양봉 필터링
-export async function filterRisingAndGreenCandles(
-  chartIntervals: ChartIntervals = "1h",
-  minRisingCandles = 3,
-  minGreenCandles = 3,
-  limit = 200,
-  common = false
-) {
-  // 우선, 연속 상승하는 코인을 필터링합니다.
-  const risingCoins = await filterContinuousRisingCoins(
-    chartIntervals,
-    minRisingCandles,
-    limit,
-    common
-  );
-
-  // 양봉을 연속으로 그리는 코인들을 필터링합니다.
-  const greenCandlesCoins = await filterContinuousGreenCandles(
-    chartIntervals,
-    minGreenCandles,
-    limit,
-    common
-  );
-
-  // 두 조건을 모두 만족하는 코인들의 교집합을 찾습니다.
-  const risingAndGreenCandlesCoins = risingCoins.filter((coin) =>
-    greenCandlesCoins.some((greenCoin) => greenCoin.symbol === coin.symbol)
-  );
-
-  return risingAndGreenCandlesCoins;
 }
