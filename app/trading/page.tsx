@@ -124,7 +124,7 @@ export default function Trading() {
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
             onClick={() =>
               fetchData("continuousRisingCoins", () =>
-                filterContinuousRisingCoins("10m", 2, 200)
+                filterContinuousRisingCoins("10m", 2, 100)
               )
             }
           >
@@ -134,7 +134,7 @@ export default function Trading() {
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
             onClick={() =>
               fetchData("ContinuousGreenCandles", () =>
-                filterContinuousGreenCandles("10m", 2, 200)
+                filterContinuousGreenCandles("10m", 2, 100)
               )
             }
           >
@@ -144,7 +144,7 @@ export default function Trading() {
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
             onClick={() =>
               fetchData("volumeSpikeCoins", () =>
-                filterVolumeSpikeCoins("10m", 200, 2)
+                filterVolumeSpikeCoins("10m", 100, 2)
               )
             }
           >
@@ -152,10 +152,49 @@ export default function Trading() {
           </button>
           <button
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
-            onClick={() => fetchData("goldenCrossCoins", findGoldenCrossCoins)}
+            onClick={() =>
+              fetchData("1mgoldenCrossCoins", () => findGoldenCrossCoins("1m"))
+            }
           >
-            golden cross
+            1m golden cross
           </button>
+          <button
+            className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
+            onClick={() =>
+              fetchData("5mgoldenCrossCoins", () => findGoldenCrossCoins("5m"))
+            }
+          >
+            5m golden cross
+          </button>
+          <button
+            className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
+            onClick={() =>
+              fetchData("10mgoldenCrossCoins", () =>
+                findGoldenCrossCoins("10m")
+              )
+            }
+          >
+            10m golden cross
+          </button>
+          <button
+            className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
+            onClick={() =>
+              fetchData("30mgoldenCrossCoins", () =>
+                findGoldenCrossCoins("30m")
+              )
+            }
+          >
+            30m golden cross
+          </button>
+          <button
+            className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
+            onClick={() =>
+              fetchData("1hgoldenCrossCoins", () => findGoldenCrossCoins("1h"))
+            }
+          >
+            1h golden cross
+          </button>
+
           <button
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
             onClick={() => fetchData("filterUpCoins", filterUp)}
