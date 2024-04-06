@@ -91,26 +91,42 @@ export const handler = async (event) => {
     );
     console.log("log=> 골든크로스가 발생한 코인 end");
 
+    const baseUrl = "https://www.bithumb.com/react/trade/order";
+    const formatCoinLink = (coin) => `[${coin}](${baseUrl}/${coin}-KRW)`;
+
     // 결과 메시지 구성
     const message = `
-    🌟 *1m Golden Cross Coins* 🌟
-    ${goldenCrossCoins.join(", ")}
+🐅
+🐅
+🐅
+🐅
+🐅
 
-    📊📈 *지속 상승 + 지속 양봉* 📊📈
-    ${risingGreenCandlesCoins.join(", ")}
-    
-    📈 *지속 상승* 📈
-    ${risingCoins.join(", ")}
+🌟 *1m Golden Cross Coins* 🌟
+${goldenCrossCoins.map(formatCoinLink).join(", ")}
 
-    📊 *지속 양봉* 📊
-    ${greenCandlesCoins.join(", ")}
+📊📈 *지속 상승 + 지속 양봉* 📊📈
+${risingGreenCandlesCoins.map(formatCoinLink).join(", ")}
     
-    💹 *거래량 급증* 💹
-    ${volumeSpikeCoins.join(", ")}
+📈 *지속 상승* 📈
+${risingCoins.map(formatCoinLink).join(", ")}
+
+📊 *지속 양봉* 📊
+${greenCandlesCoins.map(formatCoinLink).join(", ")}
     
-    🔥 *거래량 + 상승률* 🔥
-    ${commonCoins.slice(0, 20).join(", ")}
-    `;
+💹 *거래량 급증* 💹
+${volumeSpikeCoins.map(formatCoinLink).join(", ")}
+    
+🔥 *거래량 + 상승률* 🔥
+${commonCoins.slice(0, 20).map(formatCoinLink).join(", ")}
+
+🐅
+🐅
+🐅
+🐅
+🐅
+`;
+
     console.log("message: ", message);
 
     // 텔레그램으로 결과 메시지 전송
