@@ -273,7 +273,13 @@ export async function filterVolumeSpikeCoins(
   return volumeSpikeCoins;
 }
 
-export async function findGoldenCrossCoins(symbols, candlestickData) {
+export async function findGoldenCrossCoins(
+  symbols,
+  candlestickData,
+  candleCount = 10,
+  shortPeriod = 50,
+  longPeriod = 200
+) {
   const goldenCrossCoins = [];
 
   try {
@@ -286,14 +292,21 @@ export async function findGoldenCrossCoins(symbols, candlestickData) {
       const closingPrices = candleData.data.map((candle) =>
         parseFloat(candle[2])
       ); // 종가 데이터 추출
-      const ma50 = calculateMovingAverage(closingPrices, 50); // 50분 이동평균 계산
-      const ma200 = calculateMovingAverage(closingPrices, 200); // 200분 이동평균 계산
+      const shortPeriodMa = calculateMovingAverage(closingPrices, shortPeriod); // {shortPeriod}분 이동평균 계산
+      const longPeriodMa = calculateMovingAverage(closingPrices, longPeriod); // {longPeriod}분 이동평균 계산
 
       // 골든크로스 확인
-      for (let i = closingPrices.length - 10; i < closingPrices.length; i++) {
-        if (ma50[i] > ma200[i] && ma50[i - 1] <= ma200[i - 1]) {
+      for (
+        let i = closingPrices.length - candleCount;
+        i < closingPrices.length;
+        i++
+      ) {
+        if (
+          shortPeriodMa[i] > longPeriodMa[i] &&
+          shortPeriodMa[i - 1] <= longPeriodMa[i - 1]
+        ) {
           goldenCrossCoins.push(symbol);
-          break; // 최근 10개 캔들 내 골든크로스 발견 시 추가하고 다음 코인으로 넘어감
+          break; // 최근 {candleCount}개 캔들 내 골든크로스 발견 시 추가하고 다음 코인으로 넘어감
         }
       }
     }

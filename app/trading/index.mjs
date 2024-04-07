@@ -40,11 +40,15 @@ export const handler = async (event) => {
     const topRiseCoins = await filterCoinsByRiseRate(coinsData, 100);
     console.log("log=> topRiseCoins end");
 
-    const [oneMinuteCandlestickData, tenMinuteCandlestickData] =
-      await Promise.all([
-        fetchAllCandlestickData(topValueCoins, "1m"),
-        fetchAllCandlestickData(topValueCoins, "10m"),
-      ]);
+    const [
+      oneMinuteCandlestickData,
+      tenMinuteCandlestickData,
+      oneHourCandlestickData,
+    ] = await Promise.all([
+      fetchAllCandlestickData(topValueCoins, "1m"),
+      fetchAllCandlestickData(topValueCoins, "10m"),
+      fetchAllCandlestickData(topValueCoins, "1h"),
+    ]);
     console.log("log=> candlestic end");
 
     // 거래량 & 상승률 겹치는 코인
@@ -85,11 +89,27 @@ export const handler = async (event) => {
     console.log("log=> 거래량 급증 코인 end");
 
     // 골든크로스가 발생한 코인
-    const goldenCrossCoins = await findGoldenCrossCoins(
+    const oneMinuteGoldenCrossCoins = await findGoldenCrossCoins(
       topValueCoins,
       oneMinuteCandlestickData
     );
     console.log("log=> 골든크로스가 발생한 코인 end");
+
+    const oneHourGoldenCrossCoinsInTwo = await findGoldenCrossCoins(
+      topValueCoins,
+      oneHourCandlestickData,
+      2,
+      7,
+      15
+    );
+
+    const oneHourGoldenCrossCoinsInFive = await findGoldenCrossCoins(
+      topValueCoins,
+      oneHourCandlestickData,
+      5,
+      7,
+      15
+    );
 
     const baseUrl = "https://www.bithumb.com/react/trade/order";
     const formatCoinLink = (coin) => `[${coin}](${baseUrl}/${coin}-KRW)`;
@@ -103,7 +123,13 @@ export const handler = async (event) => {
 🐅
 
 🌟 *1m Golden Cross Coins* 🌟
-${goldenCrossCoins.map(formatCoinLink).join(", ")}
+${oneMinuteGoldenCrossCoins.map(formatCoinLink).join(", ")}
+
+🌟 *1h Golden Cross Coins (2)* 🌟
+${oneHourGoldenCrossCoinsInTwo.map(formatCoinLink).join(", ")}
+
+🌟 *1h Golden Cross Coins (5)* 🌟
+${oneHourGoldenCrossCoinsInFive.map(formatCoinLink).join(", ")}
 
 📊📈 *지속 상승 + 지속 양봉* 📊📈
 ${risingGreenCandlesCoins.map(formatCoinLink).join(", ")}

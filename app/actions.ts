@@ -666,7 +666,10 @@ export async function filterVolumeSpikeCoins(
 
 export async function findGoldenCrossCoins(
   coins: CoinInfo[],
-  chartIntervals: ChartIntervals = "1m"
+  chartIntervals: ChartIntervals = "1m",
+  candleCount = 10,
+  shortPeriod = 50,
+  longPeriod = 200
 ) {
   const goldenCrossCoins = [];
 
@@ -679,14 +682,21 @@ export async function findGoldenCrossCoins(
     const closingPrices = candleData.data.map((candle: any) =>
       parseFloat(candle[2])
     ); // 종가 데이터 추출
-    const ma50 = calculateMovingAverage(closingPrices, 50); // 50분 이동평균 계산
-    const ma200 = calculateMovingAverage(closingPrices, 200); // 200분 이동평균 계산
+    const shortPeriodMa = calculateMovingAverage(closingPrices, shortPeriod); // {shortPeriod}분 이동평균 계산
+    const longPeriodMa = calculateMovingAverage(closingPrices, longPeriod); // {longPeriod}분 이동평균 계산
 
     // 골든크로스 확인
-    for (let i = closingPrices.length - 10; i < closingPrices.length; i++) {
-      if (ma50[i] > ma200[i] && ma50[i - 1] <= ma200[i - 1]) {
+    for (
+      let i = closingPrices.length - candleCount;
+      i < closingPrices.length;
+      i++
+    ) {
+      if (
+        shortPeriodMa[i] > longPeriodMa[i] &&
+        shortPeriodMa[i - 1] <= longPeriodMa[i - 1]
+      ) {
         goldenCrossCoins.push(coin);
-        break; // 최근 10개 캔들 내 골든크로스 발견 시 추가하고 다음 코인으로 넘어감
+        break; // 최근 {candleCount}개 캔들 내 골든크로스 발견 시 추가하고 다음 코인으로 넘어감
       }
     }
   }
@@ -730,4 +740,99 @@ export async function lowToHigh(
   }
 
   return risingCoins;
+}
+
+export async function findRisingAndGreenCandlesCoins(
+  symbols: string[],
+  candlestickData: { [key: string]: any },
+  minRisingCandles = 3,
+  minGreenCandles = 3
+): Promise<string[]> {
+  const qualifiedCoins: string[] = []; // 조건을 만족하는 코인들을 저장할 배열
+
+  for (const symbol of symbols) {
+    const candleData = candlestickData[symbol];
+    if (
+      !candleData ||
+      candleData.status !== "0000" ||
+      candleData.data.length < Math.max(minRisingCandles, minGreenCandles)
+    )
+      continue;
+
+    let isRising = true;
+    let isAllGreen = true;
+    for (let i = 1; i < minRisingCandles; i++) {
+      if (
+        parseFloat(candleData.data[i][2]) <=
+        parseFloat(candleData.data[i - 1][2])
+      ) {
+        isRising = false;
+        break;
+      }
+    }
+
+    for (let i = 0; i < minGreenCandles && isAllGreen; i++) {
+      const openPrice = parseFloat(candleData.data[i][1]);
+      const closePrice = parseFloat(candleData.data[i][2]);
+      if (closePrice <= openPrice) {
+        isAllGreen = false;
+        break;
+      }
+    }
+
+    if (isRising && isAllGreen) {
+      qualifiedCoins.push(symbol);
+    }
+  }
+
+  return qualifiedCoins;
+}
+
+export async function filterCoinsByAverageRiseAndGreenCandles(
+  coins: CoinInfo[],
+  // candlestickData: { [key: string]: any },
+  candleCount = 5,
+  chartIntervals: ChartIntervals = "1h"
+): Promise<CoinInfo[]> {
+  const filteredCoins: CoinInfo[] = []; // 조건을 만족하는 코인들을 저장할 배열
+  try {
+    for (const coin of coins) {
+      const candleData = await candlestick(coin.symbol, "KRW", chartIntervals);
+      if (
+        !candleData ||
+        candleData.status !== "0000" ||
+        candleData.data.length < candleCount
+      )
+        return [];
+
+      let riseCandles = 0;
+      let greenCandles = 0;
+
+      // 최근 5개 캔들 분석
+      for (let i = 0; i < candleCount; i++) {
+        const candle = candleData.data[candleData.data.length - 1 - i]; // 끝에서부터 분석
+        const openPrice = parseFloat(candle[1]);
+        const closePrice = parseFloat(candle[2]);
+        const highPrice = parseFloat(candle[3]);
+        const lowPrice = parseFloat(candle[4]);
+
+        if (closePrice > openPrice) greenCandles++; // 양봉 조건
+        if (closePrice > lowPrice) riseCandles++; // 상승 조건 (종가가 저가보다 높은 경우 상승으로 간주)
+      }
+
+      // 상승 및 양봉 비율 계산
+      const riseRate = riseCandles / candleCount;
+      const greenRate = greenCandles / candleCount;
+
+      // 평균적으로 상승하며 양봉을 그리는 경우 필터링
+      if (riseRate > 0.6 && greenRate > 0.6) {
+        // 예시로 상승 및 양봉 비율이 각각 60%를 초과하는 코인만 선택
+        filteredCoins.push(coin);
+      }
+    }
+  } catch (error) {
+    return [];
+  }
+
+  return filteredCoins;
 }

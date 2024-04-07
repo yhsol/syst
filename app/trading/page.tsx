@@ -11,6 +11,7 @@ import {
   filterVolumeSpikeCoins,
   findCommonCoins,
   findGoldenCrossCoins,
+  filterCoinsByAverageRiseAndGreenCandles,
 } from "../actions";
 
 type CoinResult = { symbol: any }[];
@@ -26,12 +27,14 @@ export default function Trading() {
     setIsLoading(true);
     try {
       const result = await action();
-      const calculatedCoins = result.map((coin: any) => ({
-        ...coin,
-        riseRate: calculateRiseRate(coin.data),
-        volume: parseFloat(coin.data.units_traded_24H),
-        tradeValue: parseFloat(coin.data.acc_trade_value_24H),
-      }));
+      const calculatedCoins =
+        result.length &&
+        result.map((coin: any) => ({
+          ...coin,
+          riseRate: calculateRiseRate(coin.data),
+          volume: parseFloat(coin.data.units_traded_24H),
+          tradeValue: parseFloat(coin.data.acc_trade_value_24H),
+        }));
 
       setResults((prevResults: any) => ({
         ...prevResults,
@@ -167,6 +170,42 @@ export default function Trading() {
           <button
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
             onClick={() =>
+              fetchData("1hgoldenCrossCoins2", async () => {
+                const coins = await filterCoinsByRiseRate(200);
+                return findGoldenCrossCoins(coins, "1h", 2, 7, 15);
+              })
+            }
+          >
+            1h golden cross
+          </button>
+
+          <button
+            className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
+            onClick={() =>
+              fetchData("1hgoldenCrossCoins3", async () => {
+                const coins = await filterCoinsByRiseRate(200);
+                return findGoldenCrossCoins(coins, "1h", 3, 7, 15);
+              })
+            }
+          >
+            1h golden cross
+          </button>
+
+          <button
+            className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
+            onClick={() =>
+              fetchData("1hgoldenCrossCoins5", async () => {
+                const coins = await filterCoinsByRiseRate(200);
+                return findGoldenCrossCoins(coins, "1h", 5, 7, 15);
+              })
+            }
+          >
+            1h golden cross
+          </button>
+
+          <button
+            className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
+            onClick={() =>
               fetchData("lowToHigh", async () => {
                 const coins = await filterCoinsByValue(200);
                 return lowToHigh(coins, "5m");
@@ -174,6 +213,18 @@ export default function Trading() {
             }
           >
             low to high
+          </button>
+
+          <button
+            className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
+            onClick={() =>
+              fetchData("AverageRiseAndGreenCandles", async () => {
+                const coins = await filterCoinsByValue(200);
+                return filterCoinsByAverageRiseAndGreenCandles(coins, 5, "10m");
+              })
+            }
+          >
+            평균적으로 상승 비율이 높음
           </button>
         </aside>
 
