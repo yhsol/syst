@@ -170,25 +170,49 @@ export default function Trading() {
           <button
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
             onClick={() =>
+              fetchData("5mgoldenCrossCoins2", async () => {
+                const coins = await filterCoinsByRiseRate(200);
+                return findGoldenCrossCoins(coins, "5m", 2, 7, 15);
+              })
+            }
+          >
+            5m golden cross (2)
+          </button>
+
+          <button
+            className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
+            onClick={() =>
+              fetchData("5mgoldenCrossCoins3", async () => {
+                const coins = await filterCoinsByRiseRate(200);
+                return findGoldenCrossCoins(coins, "5m", 3, 7, 15);
+              })
+            }
+          >
+            5m golden cross (3)
+          </button>
+
+          <button
+            className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
+            onClick={() =>
+              fetchData("5mgoldenCrossCoins5", async () => {
+                const coins = await filterCoinsByRiseRate(200);
+                return findGoldenCrossCoins(coins, "5m", 5, 7, 15);
+              })
+            }
+          >
+            5m golden cross (5)
+          </button>
+
+          <button
+            className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
+            onClick={() =>
               fetchData("1hgoldenCrossCoins2", async () => {
                 const coins = await filterCoinsByRiseRate(200);
                 return findGoldenCrossCoins(coins, "1h", 2, 7, 15);
               })
             }
           >
-            1h golden cross
-          </button>
-
-          <button
-            className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
-            onClick={() =>
-              fetchData("1hgoldenCrossCoins3", async () => {
-                const coins = await filterCoinsByRiseRate(200);
-                return findGoldenCrossCoins(coins, "1h", 3, 7, 15);
-              })
-            }
-          >
-            1h golden cross
+            1h golden cross (2)
           </button>
 
           <button
@@ -200,7 +224,7 @@ export default function Trading() {
               })
             }
           >
-            1h golden cross
+            1h golden cross (5)
           </button>
 
           <button

@@ -43,11 +43,11 @@ export const handler = async (event) => {
     const [
       oneMinuteCandlestickData,
       tenMinuteCandlestickData,
-      oneHourCandlestickData,
+      // oneHourCandlestickData,
     ] = await Promise.all([
       fetchAllCandlestickData(topValueCoins, "1m"),
       fetchAllCandlestickData(topValueCoins, "10m"),
-      fetchAllCandlestickData(topValueCoins, "1h"),
+      // fetchAllCandlestickData(topValueCoins, "1h"),
     ]);
     console.log("log=> candlestic end");
 
@@ -93,23 +93,43 @@ export const handler = async (event) => {
       topValueCoins,
       oneMinuteCandlestickData
     );
-    console.log("log=> 골든크로스가 발생한 코인 end");
+    console.log("log=> 1m 골든크로스가 발생한 코인 end");
 
-    const oneHourGoldenCrossCoinsInTwo = await findGoldenCrossCoins(
+    const tenMinuteGoldenCrossCoinsInTwo = await findGoldenCrossCoins(
       topValueCoins,
-      oneHourCandlestickData,
+      tenMinuteCandlestickData,
       2,
       7,
       15
     );
+    console.log("log=> 10m 골든크로스(2)가 발생한 코인 end");
 
-    const oneHourGoldenCrossCoinsInFive = await findGoldenCrossCoins(
+    const tenMinuteGoldenCrossCoinsInFive = await findGoldenCrossCoins(
       topValueCoins,
-      oneHourCandlestickData,
+      tenMinuteCandlestickData,
       5,
       7,
       15
     );
+    console.log("log=> 10m 골든크로스(5)가 발생한 코인 end");
+
+    // const oneHourGoldenCrossCoinsInTwo = await findGoldenCrossCoins(
+    //   topValueCoins,
+    //   oneHourCandlestickData,
+    //   2,
+    //   7,
+    //   15
+    // );
+    // ${oneHourGoldenCrossCoinsInTwo.map(formatCoinLink).join(", ")}
+
+    // const oneHourGoldenCrossCoinsInFive = await findGoldenCrossCoins(
+    //   topValueCoins,
+    //   oneHourCandlestickData,
+    //   5,
+    //   7,
+    //   15
+    // );
+    // ${oneHourGoldenCrossCoinsInFive.map(formatCoinLink).join(", ")}
 
     const baseUrl = "https://www.bithumb.com/react/trade/order";
     const formatCoinLink = (coin) => `[${coin}](${baseUrl}/${coin}-KRW)`;
@@ -122,29 +142,30 @@ export const handler = async (event) => {
 🐅
 🐅
 
-🌟 *1m Golden Cross Coins* 🌟
-${oneMinuteGoldenCrossCoins.map(formatCoinLink).join(", ")}
-
-🌟 *1h Golden Cross Coins (2)* 🌟
-${oneHourGoldenCrossCoinsInTwo.map(formatCoinLink).join(", ")}
-
-🌟 *1h Golden Cross Coins (5)* 🌟
-${oneHourGoldenCrossCoinsInFive.map(formatCoinLink).join(", ")}
-
 📊📈 *지속 상승 + 지속 양봉* 📊📈
 ${risingGreenCandlesCoins.map(formatCoinLink).join(", ")}
-    
+
+🌟 *1m Golden Cross* 🌟
+${oneMinuteGoldenCrossCoins.map(formatCoinLink).join(", ")}
+
+🌟 *10m Golden Cross* 🌟
+${tenMinuteGoldenCrossCoinsInTwo.map(formatCoinLink).join(", ")}
+
 📈 *지속 상승* 📈
 ${risingCoins.map(formatCoinLink).join(", ")}
 
 📊 *지속 양봉* 📊
 ${greenCandlesCoins.map(formatCoinLink).join(", ")}
-    
+
 💹 *거래량 급증* 💹
 ${volumeSpikeCoins.map(formatCoinLink).join(", ")}
-    
+
 🔥 *거래량 + 상승률* 🔥
 ${commonCoins.slice(0, 20).map(formatCoinLink).join(", ")}
+
+🌟 *1h Golden Cross* 🌟
+
+🌟 *1h Golden Cross* 🌟
 
 🐅
 🐅
@@ -152,7 +173,6 @@ ${commonCoins.slice(0, 20).map(formatCoinLink).join(", ")}
 🐅
 🐅
 `;
-
     console.log("message: ", message);
 
     // 텔레그램으로 결과 메시지 전송
@@ -162,7 +182,7 @@ ${commonCoins.slice(0, 20).map(formatCoinLink).join(", ")}
     return {
       statusCode: 200,
       body: JSON.stringify({
-        message: "Analysis completed and sent to Telegram",
+        message: "✅ Analysis completed and sent to Telegram",
       }),
     };
   } catch (error) {
