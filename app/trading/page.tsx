@@ -122,6 +122,31 @@ export default function Trading() {
           >
             거래량 & 상승률 겹치는 코인
           </button>
+
+          <button
+            className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
+            onClick={() =>
+              fetchData("oneMinuteRisingAndGreen", async () => {
+                const coins = await filterCoinsByRiseRate(200);
+                const rising = await filterContinuousRisingCoins(
+                  coins,
+                  "1m",
+                  2
+                );
+                const green = await filterContinuousGreenCandles(
+                  coins,
+                  "1m",
+                  2
+                );
+                return rising.filter((r: any) =>
+                  green.find((g: any) => g.symbol === r.symbol)
+                );
+              })
+            }
+          >
+            1분봉 지속 상승 + 양봉 코인
+          </button>
+
           <button
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
             onClick={() =>
