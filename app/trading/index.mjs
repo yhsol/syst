@@ -31,13 +31,38 @@ const sendTelegramMessage = async (message) => {
   }
 };
 
-const baseUrl = "https://www.bithumb.com/react/trade/order";
-// https://kr.tradingview.com/chart/m0kspXtg/?symbol=BITHUMB%3ASTXKRW
+const bithumbBaseUrl = "https://www.bithumb.com/react/trade/order";
+// tradingview url example: https://kr.tradingview.com/chart/m0kspXtg/?symbol=BITHUMB%3ASTXKRW
 const tradingviewBaseUrl = "https://kr.tradingview.com/chart";
 
-const formatCoinLink = (coin) => `[${coin}](${baseUrl}/${coin}-KRW)`;
+const formatCoinLink = (coin) => `[${coin}](${bithumbBaseUrl}/${coin}-KRW)`;
 const formatTradingViewLink = (coin) =>
   `[${coin}](${tradingviewBaseUrl}/m0kspXtg/?symbol=BITHUMB%3A${coin}KRW)`;
+
+const trackCoinMentions = (coinArrays, labels) => {
+  const counts = {};
+  const sources = {};
+
+  coinArrays.forEach((coins, index) => {
+    coins.forEach((coin) => {
+      counts[coin] = (counts[coin] || 0) + 1;
+      if (!sources[coin]) sources[coin] = [];
+      sources[coin].push(labels[index]);
+    });
+  });
+
+  // Filter, sort and map with links
+  return Object.entries(counts)
+    .filter(([key, value]) => value > 1)
+    .sort((a, b) => b[1] - a[1])
+    .map(
+      ([key, value]) =>
+        `${formatTradingViewLink(key)} - ${value} - (${sources[key].join(
+          ", "
+        )})`
+    )
+    .join("\n");
+};
 
 const generateShortTermAnalysisMessage = async () => {
   console.log("Starting short-term analysis...");
@@ -117,12 +142,41 @@ const generateShortTermAnalysisMessage = async () => {
     15
   );
 
+  const coinMentions = [
+    oneMinuteRisingAndGreenCandlesCoins,
+    risingGreenCandlesCoins,
+    fallingRedCandlesCoins,
+    oneMinuteGoldenCrossCoins,
+    tenMinuteGoldenCrossCoinsInTwo,
+    risingCoins,
+    greenCandlesCoins,
+    volumeSpikeCoins,
+    commonCoins.slice(0, 20),
+  ];
+
+  const labels = [
+    "1분봉 지속 상승 + 지속 양봉",
+    "10분봉 지속 상승 + 지속 양봉",
+    "10분봉 지속 하락 + 지속 음봉",
+    "1m Golden Cross",
+    "10m Golden Cross",
+    "지속 상승",
+    "지속 양봉",
+    "거래량 급증",
+    "거래량 + 상승률",
+  ];
+
+  const mentionDetails = trackCoinMentions(coinMentions, labels);
+
   return `
 🐅 Sustainability - Short Term
 🐅
 🐅
 🐅
 🐅
+
+📊 Mentioned Coins Details:
+${mentionDetails}
 
 🟢 *1분봉 지속 상승 + 지속 양봉* 🟢
 ${oneMinuteRisingAndGreenCandlesCoins.map(formatTradingViewLink).join(", ")}
@@ -213,12 +267,33 @@ const generateLongTermAnalysisMessage = async () => {
     fallingCoins.includes(coin)
   );
 
+  const coinMentions = [
+    oneHourGoldenCrossCoinsInTwo,
+    oneHourGoldenCrossCoinsInFive.filter(
+      (coin) => !oneHourGoldenCrossCoinsInTwo.includes(coin)
+    ),
+    risingGreenCandlesCoins,
+    fallingRedCandlesCoins,
+  ];
+
+  const labels = [
+    "1h Golden Cross in Two",
+    "1h Golden Cross in Five",
+    "지속 상승 + 지속 양봉",
+    "지속 하락 + 지속 음봉",
+  ];
+
+  const mentionDetails = trackCoinMentions(coinMentions, labels);
+
   return `
 🐅 Sustainability - Long Term
 🐅
 🐅
 🐅
 🐅
+
+📊 Mentioned Coins Details:
+${mentionDetails}
 
 🌟 *1h Golden Cross in Two* 🌟
 ${oneHourGoldenCrossCoinsInTwo.map(formatTradingViewLink).join(", ")}
