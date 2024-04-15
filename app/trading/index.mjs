@@ -190,7 +190,6 @@ const generateShortTermAnalysisMessage = async () => {
 
   const coinMentions = [
     oneMinuteRisingAndGreenCandlesCoins,
-    risingGreenCandlesCoins,
     fallingRedCandlesCoins,
     oneMinuteGoldenCrossCoins,
     tenMinuteGoldenCrossCoinsInTwo,
@@ -203,7 +202,6 @@ const generateShortTermAnalysisMessage = async () => {
 
   const labels = [
     "1분봉 지속 상승 + 지속 양봉",
-    "10분봉 지속 상승 + 지속 양봉",
     "10분봉 지속 하락 + 지속 음봉",
     "1m Golden Cross",
     "10m Golden Cross",
