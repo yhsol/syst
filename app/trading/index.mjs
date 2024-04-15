@@ -11,6 +11,8 @@ const {
   filterVolumeSpikeCoins,
   findGoldenCrossCoins,
   filterCoinsByRiseRate,
+  filterContinuousFallingCoins,
+  filterContinuousRedCandles,
 } = apiFunctions;
 
 const sendTelegramMessage = async (message) => {
@@ -81,6 +83,23 @@ const generateShortTermAnalysisMessage = async () => {
   const risingGreenCandlesCoins = greenCandlesCoins.filter((coin) =>
     risingCoins.includes(coin)
   );
+
+  const fallingCoins = await filterContinuousFallingCoins(
+    topValueCoins,
+    tenMinuteCandlestickData,
+    2
+  );
+
+  const redCandlesCoins = await filterContinuousRedCandles(
+    topValueCoins,
+    tenMinuteCandlestickData,
+    2
+  );
+
+  const fallingRedCandlesCoins = redCandlesCoins.filter((coin) =>
+    fallingCoins.includes(coin)
+  );
+
   const volumeSpikeCoins = await filterVolumeSpikeCoins(
     topValueCoins,
     tenMinuteCandlestickData,
@@ -105,11 +124,14 @@ const generateShortTermAnalysisMessage = async () => {
 🐅
 🐅
 
-📊📈 *1분봉 지속 상승 + 지속 양봉* 📊📈
+🟢 *1분봉 지속 상승 + 지속 양봉* 🟢
 ${oneMinuteRisingAndGreenCandlesCoins.map(formatTradingViewLink).join(", ")}
   
-📊📈 *10분봉 지속 상승 + 지속 양봉* 📊📈
+🟢 *10분봉 지속 상승 + 지속 양봉* 🟢
 ${risingGreenCandlesCoins.map(formatTradingViewLink).join(", ")}
+
+🔴 *10분봉 지속 하락 + 지속 음봉* 🔴
+${fallingRedCandlesCoins.map(formatTradingViewLink).join(", ")}
 
 🌟 *1m Golden Cross* 🌟
 ${oneMinuteGoldenCrossCoins.map(formatTradingViewLink).join(", ")}
@@ -177,6 +199,20 @@ const generateLongTermAnalysisMessage = async () => {
     risingCoins.includes(coin)
   );
 
+  const fallingCoins = await filterContinuousFallingCoins(
+    topValueCoins,
+    oneHourCandlestickData,
+    2
+  );
+  const redCandlesCoins = await filterContinuousRedCandles(
+    topValueCoins,
+    oneHourCandlestickData,
+    2
+  );
+  const fallingRedCandlesCoins = redCandlesCoins.filter((coin) =>
+    fallingCoins.includes(coin)
+  );
+
   return `
 🐅 Sustainability - Long Term
 🐅
@@ -194,8 +230,11 @@ ${oneHourGoldenCrossCoinsInFive
   .map(formatTradingViewLink)
   .join(", ")}
 
-📊📈 *지속 상승 + 지속 양봉* 📊📈
+🟢 *지속 상승 + 지속 양봉* 🟢
 ${risingGreenCandlesCoins.map(formatTradingViewLink).join(", ")}
+
+🔴 *지속 하락 + 지속 음봉* 🔴
+${fallingRedCandlesCoins.map(formatTradingViewLink).join(", ")}
 
 🐅
 🐅

@@ -153,6 +153,46 @@ export async function filterContinuousRisingCoins(
   return risingCoins;
 }
 
+export async function filterContinuousFallingCoins(
+  symbols,
+  candlestickData,
+  minFallingCandles = 3
+) {
+  const fallingCoins = []; // 연속 하락 중인 코인들을 저장할 배열
+
+  try {
+    for (const symbol of symbols) {
+      const candleData = candlestickData[symbol];
+      if (
+        candleData.status === "0000" &&
+        candleData.data &&
+        candleData.data.length >= minFallingCandles
+      ) {
+        const candles = candleData.data.slice(-minFallingCandles); // 연속 하락을 판단하기 위한 최소 캔들 수
+        let isFalling = true; // 현재 코인이 연속 하락 중인지 판단하는 플래그
+
+        // 캔들을 순회하며 연속 하락 판단
+        for (let i = 1; i < candles.length; i++) {
+          if (parseFloat(candles[i][2]) >= parseFloat(candles[i - 1][2])) {
+            // 종가가 이전 캔들의 종가보다 높거나 같으면
+            isFalling = false; // 연속 하락이 아님
+            break;
+          }
+        }
+
+        if (isFalling) {
+          fallingCoins.push(symbol); // 연속 하락 중인 코인 추가
+        }
+      }
+    }
+  } catch (error) {
+    fallingCoins = ["error_filterContinuousFallingCoins"];
+  }
+
+  console.log("server => fallingCoins: ", fallingCoins);
+  return fallingCoins;
+}
+
 export async function filterContinuousGreenCandles(
   symbols,
   candlestickData,
@@ -186,6 +226,41 @@ export async function filterContinuousGreenCandles(
 
   console.log("server => greenCandlesCoins: ", greenCandlesCoins);
   return greenCandlesCoins;
+}
+
+export async function filterContinuousRedCandles(
+  symbols,
+  candlestickData,
+  minRedCandles = 3
+) {
+  const redCandlesCoins = []; // 연속 음봉 중인 코인들을 저장할 배열
+
+  try {
+    for (const symbol of symbols) {
+      const candleData = candlestickData[symbol];
+      if (
+        candleData.status === "0000" &&
+        candleData.data &&
+        candleData.data.length >= minRedCandles
+      ) {
+        const recentCandles = candleData.data.slice(-minRedCandles); // 최근 캔들 데이터
+        let isAllRed = recentCandles.every((candle) => {
+          const openPrice = parseFloat(candle[1]);
+          const closePrice = parseFloat(candle[2]);
+          return closePrice < openPrice; // 종가가 시가보다 낮은 경우 음봉
+        });
+
+        if (isAllRed) {
+          redCandlesCoins.push(symbol); // 연속 음봉 중인 코인 추가
+        }
+      }
+    }
+  } catch (error) {
+    redCandlesCoins = ["error_filterContinuousRedCandles"];
+  }
+
+  console.log("server => redCandlesCoins: ", redCandlesCoins);
+  return redCandlesCoins;
 }
 
 // export async function filterVolumeSpikeCoins(
@@ -368,7 +443,9 @@ const apiFunctions = {
   filterCoinsByRiseRate,
   findCommonCoins,
   filterContinuousRisingCoins,
+  filterContinuousFallingCoins,
   filterContinuousGreenCandles,
+  filterContinuousRedCandles,
   filterVolumeSpikeCoins,
   findGoldenCrossCoins,
   lowToHigh,
