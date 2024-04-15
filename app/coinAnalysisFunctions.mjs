@@ -268,7 +268,7 @@ export async function filterContinuousRedCandles(
 //   candlestickData,
 //   volumeIncreaseFactor = 1.5
 // ) {
-//   const volumeSpikeCoins = []; // 거래량이 급증한 코인들을 저장할 배열
+//   let volumeSpikeCoins = []; // 거래량이 급증한 코인들을 저장할 배열
 
 //   try {
 //     for (const symbol of symbols) {
@@ -280,6 +280,9 @@ export async function filterContinuousRedCandles(
 //       ) {
 //         const recentCandles = candleData.data.slice(-8); // 최근 8개의 캔들 데이터
 //         const volumes = recentCandles.map((candle) => parseFloat(candle[5])); // 각 캔들의 거래량
+
+//         // 최대 거래량 캔들 찾기
+//         const maxVolume = Math.max(...volumes);
 //         const averageVolume =
 //           volumes.slice(0, 5).reduce((acc, val) => acc + val, 0) / 5; // 첫 5개 캔들의 평균 거래량
 
@@ -289,17 +292,25 @@ export async function filterContinuousRedCandles(
 //           .some((volume) => volume > averageVolume * volumeIncreaseFactor);
 
 //         if (hasVolumeSpike) {
-//           volumeSpikeCoins.push(symbol); // 거래량 급증 코인 추가
+//           volumeSpikeCoins.push({ symbol, maxVolume }); // 거래량 급증 코인 추가 (최대 거래량 포함)
 //         }
 //       }
 //     }
+
+//     // 최대 거래량을 기준으로 코인들을 정렬
+//     volumeSpikeCoins.sort((a, b) => b.maxVolume - a.maxVolume);
+
+//     // 코인 심볼만 배열로 추출
+//     volumeSpikeCoins = volumeSpikeCoins.map((coin) => coin.symbol);
 //   } catch (error) {
+//     console.error("Error in filterVolumeSpikeCoins:", error);
 //     volumeSpikeCoins = ["error_filterVolumeSpikeCoins"];
 //   }
 
 //   console.log("server => volumeSpikeCoins: ", volumeSpikeCoins);
 //   return volumeSpikeCoins;
 // }
+
 export async function filterVolumeSpikeCoins(
   symbols,
   candlestickData,
@@ -318,17 +329,14 @@ export async function filterVolumeSpikeCoins(
         const recentCandles = candleData.data.slice(-8); // 최근 8개의 캔들 데이터
         const volumes = recentCandles.map((candle) => parseFloat(candle[5])); // 각 캔들의 거래량
 
-        // 최대 거래량 캔들 찾기
-        const maxVolume = Math.max(...volumes);
-        const averageVolume =
-          volumes.slice(0, 5).reduce((acc, val) => acc + val, 0) / 5; // 첫 5개 캔들의 평균 거래량
+        // EMA 계산
+        const emaVolumes = calculateEMA(volumes, 3); // 짧은 기간 EMA
+        const averageVolume = emaVolumes[emaVolumes.length - 1]; // 가장 최근 EMA 값
 
-        // 마지막 세 개 캔들 중 하나라도 평균의 {volumeIncreaseFactor}배 이상인 경우 확인
-        const hasVolumeSpike = volumes
-          .slice(-3)
-          .some((volume) => volume > averageVolume * volumeIncreaseFactor);
-
-        if (hasVolumeSpike) {
+        // 마지막 캔들 거래량이 EMA 대비 지정된 배수 이상인지 확인
+        const lastVolume = volumes[volumes.length - 1];
+        if (lastVolume > averageVolume * volumeIncreaseFactor) {
+          const maxVolume = Math.max(...volumes);
           volumeSpikeCoins.push({ symbol, maxVolume }); // 거래량 급증 코인 추가 (최대 거래량 포함)
         }
       }
@@ -346,6 +354,22 @@ export async function filterVolumeSpikeCoins(
 
   console.log("server => volumeSpikeCoins: ", volumeSpikeCoins);
   return volumeSpikeCoins;
+}
+
+function calculateEMA(data, period) {
+  let ema = [];
+  let k = 2 / (period + 1);
+  // 첫 EMA는 단순 평균 사용
+  let emaBase =
+    data.slice(0, period).reduce((acc, val) => acc + val, 0) / period;
+  ema.push(emaBase);
+
+  // 이후 EMA 계산
+  for (let i = period; i < data.length; i++) {
+    ema.push(data[i] * k + ema[ema.length - 1] * (1 - k));
+  }
+
+  return ema;
 }
 
 export async function findGoldenCrossCoins(
@@ -435,6 +459,45 @@ function calculateMovingAverage(prices, period) {
   });
 }
 
+export async function filterBullishEngulfing(symbols, candlestickData) {
+  let bullishEngulfingCoins = [];
+
+  try {
+    for (const symbol of symbols) {
+      const candleData = candlestickData[symbol];
+      if (
+        candleData.status === "0000" &&
+        candleData.data &&
+        candleData.data.length >= 2
+      ) {
+        const lastCandle = candleData.data[candleData.data.length - 1];
+        const secondLastCandle = candleData.data[candleData.data.length - 2];
+
+        const lastOpen = parseFloat(lastCandle[1]);
+        const lastClose = parseFloat(lastCandle[2]);
+        const secondLastOpen = parseFloat(secondLastCandle[1]);
+        const secondLastClose = parseFloat(secondLastCandle[2]);
+
+        // 불리시 엔가프 조건 확인
+        if (
+          secondLastOpen > secondLastClose &&
+          lastOpen < lastClose &&
+          lastOpen < secondLastClose &&
+          lastClose > secondLastOpen
+        ) {
+          bullishEngulfingCoins.push(symbol);
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error in filterBullishEngulfing:", error);
+    bullishEngulfingCoins = ["error_filterBullishEngulfing"];
+  }
+
+  console.log("server => bullishEngulfingCoins: ", bullishEngulfingCoins);
+  return bullishEngulfingCoins;
+}
+
 const apiFunctions = {
   currentPriceInfo,
   candlestick,
@@ -449,6 +512,7 @@ const apiFunctions = {
   filterVolumeSpikeCoins,
   findGoldenCrossCoins,
   lowToHigh,
+  filterBullishEngulfing,
 };
 
 export default apiFunctions;

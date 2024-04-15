@@ -13,23 +13,64 @@ const {
   filterCoinsByRiseRate,
   filterContinuousFallingCoins,
   filterContinuousRedCandles,
+  filterBullishEngulfing,
 } = apiFunctions;
+
+const TELEGRAM_MESSAGE_MAX_LENGTH = 4096;
 
 const sendTelegramMessage = async (message) => {
   const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_BOT_ID;
   const url = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;
 
-  try {
-    await axios.post(url, {
-      chat_id: chatId,
-      text: message,
-      parse_mode: "Markdown",
-    });
-  } catch (error) {
-    console.error("Telegram send error:", error);
+  if (message.length <= TELEGRAM_MESSAGE_MAX_LENGTH) {
+    try {
+      await axios.post(url, {
+        chat_id: chatId,
+        text: message,
+        parse_mode: "Markdown",
+      });
+    } catch (error) {
+      console.error("Telegram send error:", error);
+    }
+  } else {
+    // 메시지가 최대 길이를 초과하는 경우, 여러 개의 메시지로 분할하여 전송
+    let messagePart = message;
+    while (messagePart.length > 0) {
+      const messageToSend = messagePart.slice(0, TELEGRAM_MESSAGE_MAX_LENGTH);
+      messagePart = messagePart.slice(TELEGRAM_MESSAGE_MAX_LENGTH);
+      try {
+        await axios.post(url, {
+          chat_id: chatId,
+          text: messageToSend,
+          parse_mode: "Markdown",
+        });
+        // 다음 메시지 전송 전 잠시 대기
+        if (messagePart.length > 0)
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+      } catch (error) {
+        console.error("Telegram send error:", error);
+        break; // 전송 오류 시 반복 중단
+      }
+    }
   }
 };
+
+// const sendTelegramMessage = async (message) => {
+//   const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
+//   const chatId = process.env.TELEGRAM_BOT_ID;
+//   const url = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;
+
+//   try {
+//     await axios.post(url, {
+//       chat_id: chatId,
+//       text: message,
+//       parse_mode: "Markdown",
+//     });
+//   } catch (error) {
+//     console.error("Telegram send error:", error);
+//   }
+// };
 
 const bithumbBaseUrl = "https://www.bithumb.com/react/trade/order";
 // tradingview url example: https://kr.tradingview.com/chart/m0kspXtg/?symbol=BITHUMB%3ASTXKRW
@@ -142,6 +183,11 @@ const generateShortTermAnalysisMessage = async () => {
     15
   );
 
+  const bullishEngulfingCoins = await filterBullishEngulfing(
+    topValueCoins,
+    tenMinuteCandlestickData
+  );
+
   const coinMentions = [
     oneMinuteRisingAndGreenCandlesCoins,
     risingGreenCandlesCoins,
@@ -152,6 +198,7 @@ const generateShortTermAnalysisMessage = async () => {
     greenCandlesCoins,
     volumeSpikeCoins,
     commonCoins.slice(0, 20),
+    bullishEngulfingCoins,
   ];
 
   const labels = [
@@ -164,11 +211,12 @@ const generateShortTermAnalysisMessage = async () => {
     "지속 양봉",
     "거래량 급증",
     "거래량 + 상승률",
+    "Bullish Engulfing",
   ];
 
   const mentionDetails = trackCoinMentions(coinMentions, labels);
 
-  return `
+  const message = `
 🐅 Sustainability - Short Term
 🐅
 🐅
@@ -205,12 +253,17 @@ ${volumeSpikeCoins.map(formatTradingViewLink).join(", ")}
 🔥 *거래량 + 상승률* 🔥
 ${commonCoins.slice(0, 20).map(formatTradingViewLink).join(", ")}
 
+🕯️ *Bullish Engulfing* 🕯️
+${bullishEngulfingCoins.map(formatTradingViewLink).join(", ")}
+
 🐅
 🐅
 🐅
 🐅
 🐅
 `;
+
+  return message;
 };
 
 const generateLongTermAnalysisMessage = async () => {
@@ -267,6 +320,11 @@ const generateLongTermAnalysisMessage = async () => {
     fallingCoins.includes(coin)
   );
 
+  const bullishEngulfingCoins = await filterBullishEngulfing(
+    topValueCoins,
+    oneHourCandlestickData
+  );
+
   const coinMentions = [
     oneHourGoldenCrossCoinsInTwo,
     oneHourGoldenCrossCoinsInFive.filter(
@@ -274,6 +332,7 @@ const generateLongTermAnalysisMessage = async () => {
     ),
     risingGreenCandlesCoins,
     fallingRedCandlesCoins,
+    bullishEngulfingCoins,
   ];
 
   const labels = [
@@ -281,11 +340,12 @@ const generateLongTermAnalysisMessage = async () => {
     "1h Golden Cross in Five",
     "지속 상승 + 지속 양봉",
     "지속 하락 + 지속 음봉",
+    "Bullish Engulfing",
   ];
 
   const mentionDetails = trackCoinMentions(coinMentions, labels);
 
-  return `
+  const message = `
 🐅 Sustainability - Long Term
 🐅
 🐅
@@ -311,12 +371,17 @@ ${risingGreenCandlesCoins.map(formatTradingViewLink).join(", ")}
 🔴 *지속 하락 + 지속 음봉* 🔴
 ${fallingRedCandlesCoins.map(formatTradingViewLink).join(", ")}
 
+🕯️ *Bullish Engulfing* 🕯️
+${bullishEngulfingCoins.map(formatTradingViewLink).join(", ")}
+
 🐅
 🐅
 🐅
 🐅
 🐅
 `;
+
+  return message;
 };
 
 // Main Lambda function
