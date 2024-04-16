@@ -290,6 +290,37 @@ const generateLongTermAnalysisMessage = async () => {
     15
   );
 
+  const oneDayCandlestickData = await fetchAllCandlestickData(
+    topValueCoins,
+    "24h"
+  );
+
+  const oneDayGoldenCrossCoins = await findGoldenCrossCoins(
+    topValueCoins,
+    oneDayCandlestickData,
+    2,
+    7,
+    15
+  );
+
+  const oneDayRisingCoins = await filterContinuousRisingCoins(
+    topValueCoins,
+    oneDayCandlestickData,
+    2
+  );
+  const oneDayGreenCandlesCoins = await filterContinuousGreenCandles(
+    topValueCoins,
+    oneDayCandlestickData,
+    2
+  );
+  const oneDayRisingAndGreenCandlesCoins = oneDayGreenCandlesCoins.filter(
+    (coin) => oneDayRisingCoins.includes(coin)
+  );
+  const oneDayBullishEngulfingCoins = await filterBullishEngulfing(
+    topValueCoins,
+    oneDayCandlestickData
+  );
+
   const risingCoins = await filterContinuousRisingCoins(
     topValueCoins,
     oneHourCandlestickData,
@@ -331,6 +362,9 @@ const generateLongTermAnalysisMessage = async () => {
     risingGreenCandlesCoins,
     fallingRedCandlesCoins,
     bullishEngulfingCoins,
+    oneDayRisingAndGreenCandlesCoins,
+    oneDayBullishEngulfingCoins,
+    oneDayGoldenCrossCoins,
   ];
 
   const labels = [
@@ -339,6 +373,9 @@ const generateLongTermAnalysisMessage = async () => {
     "지속 상승 + 지속 양봉",
     "지속 하락 + 지속 음봉",
     "Bullish Engulfing",
+    "지속 상승 + 지속 양봉 - 1d",
+    "Bullish Engulfing - 1d",
+    "1d Golden Cross in Two",
   ];
 
   const mentionDetails = trackCoinMentions(coinMentions, labels);
@@ -363,14 +400,23 @@ ${oneHourGoldenCrossCoinsInFive
   .map(formatTradingViewLink)
   .join(", ")}
 
+🌟 *1d Golden Cross in Two* 🌟
+${oneDayGoldenCrossCoins.map(formatTradingViewLink).join(", ")}
+
 🟢 *지속 상승 + 지속 양봉* 🟢
 ${risingGreenCandlesCoins.map(formatTradingViewLink).join(", ")}
+
+🟢 *지속 상승 + 지속 양봉 - 1d* 🟢
+${oneDayRisingAndGreenCandlesCoins.map(formatTradingViewLink).join(", ")}
 
 🔴 *지속 하락 + 지속 음봉* 🔴
 ${fallingRedCandlesCoins.map(formatTradingViewLink).join(", ")}
 
 🕯️ *Bullish Engulfing* 🕯️
 ${bullishEngulfingCoins.map(formatTradingViewLink).join(", ")}
+
+🕯️ *Bullish Engulfing - 1d* 🕯️
+${oneDayBullishEngulfingCoins.map(formatTradingViewLink).join(", ")}
 
 🐅
 🐅
