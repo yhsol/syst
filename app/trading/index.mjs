@@ -18,9 +18,13 @@ const {
 
 const TELEGRAM_MESSAGE_MAX_LENGTH = 4096;
 
-const sendTelegramMessage = async (message) => {
-  const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_BOT_ID;
+const sendTelegramMessage = async (message, isLongTermAnalysis) => {
+  const telegramBotToken = isLongTermAnalysis
+    ? process.env.TELEGRAM_LONG_TERM_BOT_TOKEN
+    : process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = isLongTermAnalysis
+    ? process.env.TELEGRAM_LONG_TERM_BOT_ID
+    : process.env.TELEGRAM_BOT_ID;
   const url = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;
 
   if (message.length <= TELEGRAM_MESSAGE_MAX_LENGTH) {
@@ -441,7 +445,7 @@ export const handler = async (event) => {
     console.log("Generated message: ", message);
 
     // Sending the result message to Telegram
-    await sendTelegramMessage(message);
+    await sendTelegramMessage(message, isLongTermAnalysis);
     console.log("Message sent to Telegram successfully.");
 
     return {
