@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export default function Trading() {
   const [isLoading, setIsLoading] = useState(false);
@@ -10,7 +10,10 @@ export default function Trading() {
   const [units, setUnits] = useState(0);
   const [buyPrice, setBuyPrice] = useState(0);
   const [amount, setAmount] = useState(1.0);
-  const [profit, setProfit] = useState(5);
+  const [profitTarget, setProfitTarget] = useState({
+    profit: 5,
+    amount: 0.5,
+  });
 
   const baseURL = "https://syst-web-447-8c66c29d-khioiqah.onporter.run";
   const apiKey = process.env.NEXT_PUBLIC_SYST_API_KEY;
@@ -43,6 +46,7 @@ export default function Trading() {
     }
   };
 
+  const handleHelloWorld = () => fetchData("/");
   const handleRunTrade = () =>
     fetchData(`/trade/run?timeframe=1h&symbols=${symbol}`);
   const handleStopAll = () => fetchData("/trade/stop-all");
@@ -60,7 +64,9 @@ export default function Trading() {
   const handleAddActiveSymbol = () =>
     fetchData(`/trade/add-active-symbol?symbols=${symbol}`);
   const handleSetProfitTarget = () =>
-    fetchData(`/trade/set-profit-target?profit=${profit}&amount=${amount}`);
+    fetchData(
+      `/trade/set-profit-target?profit=${profitTarget.profit}&amount=${profitTarget.amount}`
+    );
   const handleBuy = () => fetchData(`/trade/buy?symbol=${symbol}`);
   const handleSell = () =>
     fetchData(`/trade/sell?symbol=${symbol}&amount=${amount}`);
@@ -70,114 +76,244 @@ export default function Trading() {
       <div className="flex h-screen divide-x-2 divide-black">
         {/* 왼쪽 사이드 메뉴 */}
         <aside className="w-1/4 p-4 overflow-y-auto">
-          <input
-            type="text"
-            placeholder="Symbol"
-            value={symbol}
-            onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-            className="my-2 p-2 w-full bg-gray-200 rounded-md"
-          />
-          <input
-            type="number"
-            placeholder="KRW"
-            value={krw}
-            onChange={(e) => setKrw(parseFloat(e.target.value))}
-            className="my-2 p-2 w-full bg-gray-200 rounded-md"
-          />
-          <input
-            type="number"
-            placeholder="Units"
-            value={units}
-            onChange={(e) => setUnits(parseFloat(e.target.value))}
-            className="my-2 p-2 w-full bg-gray-200 rounded-md"
-          />
-          <input
-            type="number"
-            placeholder="Buy Price"
-            value={buyPrice}
-            onChange={(e) => setBuyPrice(parseFloat(e.target.value))}
-            className="my-2 p-2 w-full bg-gray-200 rounded-md"
-          />
-          <input
-            type="number"
-            placeholder="Amount"
-            value={amount}
-            onChange={(e) => setAmount(parseFloat(e.target.value))}
-            className="my-2 p-2 w-full bg-gray-200 rounded-md"
-          />
-          <input
-            type="number"
-            placeholder="Profit"
-            value={profit}
-            onChange={(e) => setProfit(parseFloat(e.target.value))}
-            className="my-2 p-2 w-full bg-gray-200 rounded-md"
-          />
           <button
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
-            onClick={handleRunTrade}
+            onClick={handleHelloWorld}
           >
-            Run Trade
+            Hello World!
           </button>
-          <button
-            className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
-            onClick={handleStopAll}
-          >
-            Stop All
-          </button>
-          <button
-            className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
-            onClick={handleStopSymbol}
-          >
-            Stop Symbol
-          </button>
+
+          <div className="border-b-2 border-black my-4"></div>
+
           <button
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
             onClick={handleStatus}
           >
             Status
           </button>
+
+          <div className="border-b-2 border-black my-4"></div>
+
+          <button
+            className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
+            onClick={handleRunTrade}
+          >
+            Run Trade
+          </button>
+
+          <div className="border-b-2 border-black my-4"></div>
+
+          <button
+            className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
+            onClick={handleStopAll}
+          >
+            Stop All
+          </button>
+
+          <div className="border-b-2 border-black my-4"></div>
+
+          <div className="flex align-center justify-between gap-4">
+            <label className="block mt-4">Symbol: </label>
+            <input
+              type="text"
+              placeholder="Symbol"
+              value={symbol}
+              onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+              className="my-2 p-2 w-full bg-gray-200 rounded-md"
+            />
+          </div>
+          <button
+            className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
+            onClick={handleStopSymbol}
+          >
+            Stop Symbol
+          </button>
+
+          <div className="border-b-2 border-black my-4"></div>
+
           <button
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
             onClick={handleReselect}
           >
             Reselect
           </button>
+
+          <div className="border-b-2 border-black my-4"></div>
+
+          <div className="flex align-center justify-between gap-4">
+            <label className="block mt-4">KRW</label>
+            <input
+              type="number"
+              placeholder="KRW"
+              value={krw}
+              onChange={(e) => setKrw(parseFloat(e.target.value))}
+              className="my-2 p-2 w-full bg-gray-200 rounded-md"
+            />
+          </div>
           <button
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
             onClick={handleSetKrw}
           >
             Set Available KRW
           </button>
+
+          <div className="border-b-2 border-black my-4"></div>
+
+          <div className="flex align-center justify-between gap-4">
+            <label className="block mt-4">Symbol</label>
+            <input
+              type="text"
+              placeholder="Symbol"
+              value={symbol}
+              onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+              className="my-2 p-2 w-full bg-gray-200 rounded-md"
+            />
+          </div>
+          <div className="flex align-center justify-between gap-4">
+            <label className="block mt-4">Units</label>
+            <input
+              type="number"
+              placeholder="Units"
+              value={units}
+              onChange={(e) => setUnits(parseFloat(e.target.value))}
+              className="my-2 p-2 w-full bg-gray-200 rounded-md"
+            />
+          </div>
+          <div className="flex align-center justify-between gap-4">
+            <label className="block mt-4">Buy Price</label>
+            <input
+              type="number"
+              placeholder="Buy Price"
+              value={buyPrice}
+              onChange={(e) => setBuyPrice(parseFloat(e.target.value))}
+              className="my-2 p-2 w-full bg-gray-200 rounded-md"
+            />
+          </div>
           <button
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
             onClick={handleAddHolding}
           >
             Add Holding
           </button>
+
+          <div className="border-b-2 border-black my-4"></div>
+
+          <div className="flex align-center justify-between gap-4">
+            <label className="block mt-4">Symbol</label>
+            <input
+              type="text"
+              placeholder="Symbol"
+              value={symbol}
+              onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+              className="my-2 p-2 w-full bg-gray-200 rounded-md"
+            />
+          </div>
           <button
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
             onClick={handleRemoveHolding}
           >
             Remove Holding
           </button>
+
+          <div className="border-b-2 border-black my-4"></div>
+
+          <div className="flex align-center justify-between gap-4">
+            <label className="block mt-4">Symbol</label>
+            <input
+              type="text"
+              placeholder="Symbol"
+              value={symbol}
+              onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+              className="my-2 p-2 w-full bg-gray-200 rounded-md"
+            />
+          </div>
           <button
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
             onClick={handleAddActiveSymbol}
           >
             Add Active Symbol
           </button>
+
+          <div className="border-b-2 border-black my-4"></div>
+
+          <div className="flex align-center justify-between gap-4">
+            <label className="block mt-4">Profit</label>
+            <input
+              type="number"
+              placeholder="Profit"
+              value={profitTarget.profit}
+              onChange={(e) =>
+                setProfitTarget({
+                  ...profitTarget,
+                  profit: parseFloat(e.target.value),
+                })
+              }
+              className="my-2 p-2 w-full bg-gray-200 rounded-md"
+            />
+          </div>
+          <div className="flex align-center justify-between gap-4">
+            <label className="block mt-4">Amount</label>
+            <input
+              type="number"
+              placeholder="Amount"
+              value={profitTarget.amount}
+              onChange={(e) =>
+                setProfitTarget({
+                  ...profitTarget,
+                  amount: parseFloat(e.target.value),
+                })
+              }
+              className="my-2 p-2 w-full bg-gray-200 rounded-md"
+            />
+          </div>
           <button
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
             onClick={handleSetProfitTarget}
           >
             Set Profit Target
           </button>
+
+          <div className="border-b-2 border-black my-4"></div>
+
+          <div className="flex align-center justify-between gap-4">
+            <label className="block mt-4">Symbol</label>
+            <input
+              type="text"
+              placeholder="Symbol"
+              value={symbol}
+              onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+              className="my-2 p-2 w-full bg-gray-200 rounded-md"
+            />
+          </div>
           <button
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
             onClick={handleBuy}
           >
             Buy
           </button>
+
+          <div className="border-b-2 border-black my-4"></div>
+
+          <div className="flex align-center justify-between gap-4">
+            <label className="block mt-4">Symbol</label>
+            <input
+              type="text"
+              placeholder="Symbol"
+              value={symbol}
+              onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+              className="my-2 p-2 w-full bg-gray-200 rounded-md"
+            />
+          </div>
+          <div className="flex align-center justify-between gap-4">
+            <label className="block mt-4">Amount</label>
+            <input
+              type="number"
+              placeholder="Amount"
+              value={amount}
+              onChange={(e) => setAmount(parseFloat(e.target.value))}
+              className="my-2 p-2 w-full bg-gray-200 rounded-md"
+            />
+          </div>
           <button
             className="my-2 p-2 w-full bg-gray-500 text-white rounded-md"
             onClick={handleSell}
