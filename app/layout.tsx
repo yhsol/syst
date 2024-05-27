@@ -24,6 +24,11 @@ export default function RootLayout({
                 </Link>
               </li>
               <li>
+                <Link href={"/signal"} className="hover:text-gray-500">
+                  Signal
+                </Link>
+              </li>
+              <li>
                 <Link href={"/calc"} className="hover:text-gray-500">
                   Calc
                 </Link>
