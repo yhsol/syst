@@ -19,12 +19,13 @@ const {
 const TELEGRAM_MESSAGE_MAX_LENGTH = 4096;
 
 const sendTelegramMessage = async (message, isLongTermAnalysis) => {
+  // 임시로, short, long 을 같은 채널로 전송
   const telegramBotToken = isLongTermAnalysis
     ? process.env.TELEGRAM_LONG_TERM_BOT_TOKEN
-    : process.env.TELEGRAM_BOT_TOKEN;
+    : process.env.TELEGRAM_LONG_TERM_BOT_TOKEN;
   const chatId = isLongTermAnalysis
     ? process.env.TELEGRAM_LONG_TERM_BOT_ID
-    : process.env.TELEGRAM_BOT_ID;
+    : process.env.TELEGRAM_LONG_TERM_BOT_ID;
   const url = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;
 
   if (message.length <= TELEGRAM_MESSAGE_MAX_LENGTH) {
