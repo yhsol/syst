@@ -19,7 +19,6 @@ const {
 const TELEGRAM_MESSAGE_MAX_LENGTH = 4096;
 
 const sendTelegramMessage = async (message, isLongTermAnalysis) => {
-  // 임시로, short, long 을 같은 채널로 전송
   const telegramBotToken = isLongTermAnalysis
     ? process.env.TELEGRAM_LONG_TERM_BOT_TOKEN
     : process.env.TELEGRAM_LONG_TERM_BOT_TOKEN;
@@ -122,11 +121,7 @@ const generateShortTermAnalysisMessage = async () => {
       fetchAllCandlestickData(topValueCoins, "10m"),
     ]);
 
-  const commonCoins = await findCommonCoins(
-    topValueCoins,
-    topRiseCoins,
-    "rise"
-  );
+
   const oneMinuteRisingCoins = await filterContinuousRisingCoins(
     topValueCoins,
     oneMinuteCandlestickData,
@@ -193,6 +188,12 @@ const generateShortTermAnalysisMessage = async () => {
     tenMinuteCandlestickData
   );
 
+  const commonCoins = await findCommonCoins(
+    volumeSpikeCoins,
+    risingGreenCandlesCoins,
+    "rise"
+  );
+
   const coinMentions = [
     oneMinuteRisingAndGreenCandlesCoins,
     fallingRedCandlesCoins,
@@ -207,13 +208,13 @@ const generateShortTermAnalysisMessage = async () => {
 
   const labels = [
     "1분봉 지속 상승 + 지속 양봉",
-    "10분봉 지속 하락 + 지속 음봉",
+    "10분봉 지속 상승 + 지속 양봉",
     "1m Golden Cross",
     "10m Golden Cross",
     "지속 상승",
     "지속 양봉",
     "거래량 급증",
-    "거래량 + 상승률",
+    "거래량급증 + 상승률",
     "Bullish Engulfing",
   ];
 
@@ -235,9 +236,6 @@ ${oneMinuteRisingAndGreenCandlesCoins.map(formatTradingViewLink).join(", ")}
 🟢 *10분봉 지속 상승 + 지속 양봉* 🟢
 ${risingGreenCandlesCoins.map(formatTradingViewLink).join(", ")}
 
-🔴 *10분봉 지속 하락 + 지속 음봉* 🔴
-${fallingRedCandlesCoins.map(formatTradingViewLink).join(", ")}
-
 🌟 *1m Golden Cross* 🌟
 ${oneMinuteGoldenCrossCoins.map(formatTradingViewLink).join(", ")}
 
@@ -253,7 +251,7 @@ ${greenCandlesCoins.map(formatTradingViewLink).join(", ")}
 💹 *거래량 급증* 💹
 ${volumeSpikeCoins.map(formatTradingViewLink).join(", ")}
 
-🔥 *거래량 + 상승률* 🔥
+🔥 *거래량급증 + 상승률* 🔥
 ${commonCoins.slice(0, 20).map(formatTradingViewLink).join(", ")}
 
 🕯️ *Bullish Engulfing* 🕯️
@@ -374,9 +372,7 @@ const generateLongTermAnalysisMessage = async () => {
 
   const labels = [
     "1h Golden Cross in Two",
-    "1h Golden Cross in Five",
-    "지속 상승 + 지속 양봉",
-    "지속 하락 + 지속 음봉",
+    "지속 상승 + 지속 양봉 - 1h",
     "Bullish Engulfing",
     "지속 상승 + 지속 양봉 - 1d",
     "Bullish Engulfing - 1d",
@@ -398,24 +394,14 @@ ${mentionDetails}
 🌟 *1h Golden Cross in Two* 🌟
 ${oneHourGoldenCrossCoinsInTwo.map(formatTradingViewLink).join(", ")}
 
-🌟 *1h Golden Cross in Five* 🌟
-${oneHourGoldenCrossCoinsInFive
-  // Remove coins that are already in the 2-hour golden cross list
-  .filter((coin) => !oneHourGoldenCrossCoinsInTwo.includes(coin))
-  .map(formatTradingViewLink)
-  .join(", ")}
-
 🌟 *1d Golden Cross in Two* 🌟
 ${oneDayGoldenCrossCoins.map(formatTradingViewLink).join(", ")}
 
-🟢 *지속 상승 + 지속 양봉* 🟢
+🟢 *지속 상승 + 지속 양봉 - 1h* 🟢
 ${risingGreenCandlesCoins.map(formatTradingViewLink).join(", ")}
 
 🟢 *지속 상승 + 지속 양봉 - 1d* 🟢
 ${oneDayRisingAndGreenCandlesCoins.map(formatTradingViewLink).join(", ")}
-
-🔴 *지속 하락 + 지속 음봉* 🔴
-${fallingRedCandlesCoins.map(formatTradingViewLink).join(", ")}
 
 🕯️ *Bullish Engulfing* 🕯️
 ${bullishEngulfingCoins.map(formatTradingViewLink).join(", ")}
