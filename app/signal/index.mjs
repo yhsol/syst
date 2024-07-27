@@ -173,14 +173,14 @@ const generateShortTermAnalysisMessage = async () => {
     topValueCoins,
     oneMinuteCandlestickData,
     2,
-    7,
+    5,
     15
   );
   const tenMinuteGoldenCrossCoinsInTwo = await findGoldenCrossCoins(
     topValueCoins,
     tenMinuteCandlestickData,
     2,
-    7,
+    5,
     15
   );
 
@@ -282,7 +282,7 @@ const generateLongTermAnalysisMessage = async () => {
     topValueCoins,
     oneHourCandlestickData,
     2,
-    7,
+    5,
     15
   );
 
@@ -295,7 +295,7 @@ const generateLongTermAnalysisMessage = async () => {
     topValueCoins,
     oneDayCandlestickData,
     2,
-    7,
+    5,
     15
   );
 
