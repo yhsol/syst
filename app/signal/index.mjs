@@ -171,7 +171,10 @@ const generateShortTermAnalysisMessage = async () => {
   );
   const oneMinuteGoldenCrossCoins = await findGoldenCrossCoins(
     topValueCoins,
-    oneMinuteCandlestickData
+    oneMinuteCandlestickData,
+    2,
+    7,
+    15
   );
   const tenMinuteGoldenCrossCoinsInTwo = await findGoldenCrossCoins(
     topValueCoins,
@@ -283,14 +286,6 @@ const generateLongTermAnalysisMessage = async () => {
     15
   );
 
-  const oneHourGoldenCrossCoinsInFive = await findGoldenCrossCoins(
-    topValueCoins,
-    oneHourCandlestickData,
-    5,
-    7,
-    15
-  );
-
   const oneDayCandlestickData = await fetchAllCandlestickData(
     topValueCoins,
     "24h"
@@ -357,9 +352,6 @@ const generateLongTermAnalysisMessage = async () => {
 
   const coinMentions = [
     oneHourGoldenCrossCoinsInTwo,
-    oneHourGoldenCrossCoinsInFive.filter(
-      (coin) => !oneHourGoldenCrossCoinsInTwo.includes(coin)
-    ),
     risingGreenCandlesCoins,
     fallingRedCandlesCoins,
     bullishEngulfingCoins,
